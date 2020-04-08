@@ -17,7 +17,7 @@ Install progressbar
     Copy to a folder the following files:
     study_time_tally.py log_tools.py
     
-Run script:
-    Open Command Prompt:
-    Goto folder containing the .py files
-    Run Command: study_time_tally.py
+Run script:<br />
+    Open Command Prompt:<br />
+    Goto folder containing the .py files<br />
+    Run Command: study_time_tally.py<br />
