@@ -6,13 +6,8 @@ Track your study hours.
     Bitcoin: 3EjKSBQka7rHaLqKMXKZ8t7sHDa546GWAd
     Other options @ http://michaelfulcher.yolasite.com/other-crypto-donation-options.php
 
-Instructions:<br />
+## Instructions:<br />
 Install Python 3.7+<br />
-Install progressbar<br />
-    Windows:<br />
-    Open Command Prompt:<br />
-    Use command:<br />
-        pip install progressbar<br />
         
     Copy to a folder the following files:
     study_time_tally.py log_tools.py
