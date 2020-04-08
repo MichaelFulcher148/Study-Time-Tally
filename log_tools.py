@@ -3,11 +3,20 @@ Source: https://stackoverflow.com/questions/15959534/visibility-of-global-variab
 from time import strftime, localtime
 from code_tools import countup, countdown
 ##from sys import maxunicode
-global run_date, script_id, html_output_file
+global run_date, script_id, html_output_file, log_file_name
 
-def initialize():
-    global html_output_file
-    html_output_file = list()
+def initialize(enable_html = True):
+    if enable_html:
+        global html_output_file
+        html_output_file = list()
+    from os import path
+    if not path.isdir(r'.\logs'):
+        from os import makedirs
+        makedirs('logs')
+        tprint("Log directory created.\n")
+        del makedirs
+    del path
+    ## move log name creation to here
 ##, non_bmp_map
 ##non_bmp_map = dict.fromkeys(range(0x10000, maxunicode + 1), 0xfffd)
 

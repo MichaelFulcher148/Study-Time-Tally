@@ -11,15 +11,23 @@ from os import path, rename as file_rename, remove as file_del
 from math import ceil
 from datetime import date, timedelta, datetime
 import log_tools
-log_tools.script_id = "TimeTally"
+log_tools.script_id = "StudyTimeTally"
 log_tools.run_date = time.strftime('%d-%m-%Y', time.localtime())
+log_tools.initialize(False)
 day_options = 'MTWHFSU'
 weekDays = ("Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday")
 menu_weekDays = ("(M)onday","(T)uesday","(W)ednesday","T(H)ursday","(F)riday","(S)aturday","S(U)nday")
 menu_mode = 'm'
 data_json_path = r'.\data\study_tally_data.json'
 
-print("Starting Study Tally\n\tBy Michael Fulcher")
+print("Study Time Tally\n\tBy Michael Fulcher\nSend Donations to - PayPal: mjfulcher58@gmail.com or Bitcoin: 3EjKSBQka7rHaLqKMXKZ8t7sHDa546GWAd\nOther donation options @ http://michaelfulcher.yolasite.com/\n\n")
+
+if not path.isdir(r'.\data'):
+    from os import makedirs
+    makedirs('data')
+    log_tools.tprint("Data directory created.")
+    del makedirs
+
 
 if path.isfile(data_json_path):
     with open(data_json_path, 'r') as open_file:
