@@ -12,7 +12,7 @@ Install Python 3.7+<br />
     Copy to a folder the following files:
     study_time_tally.py log_tools.py
     
-Run script:<br />
+### Run script:<br />
     Open Command Prompt:<br />
     Goto folder containing the .py files<br />
     Run Command: study_time_tally.py<br />
