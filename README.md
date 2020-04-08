@@ -15,6 +15,6 @@ Install Python 3.7+<br />
     study_time_tally.py log_tools.py
     
 ### Run script:
-    Open Command Prompt:<br />
-    Goto folder containing the .py files<br />
-    Run Command: study_time_tally.py<br />
+    Open Command Prompt:
+    Goto folder containing the .py files
+    Run Command: study_time_tally.py
