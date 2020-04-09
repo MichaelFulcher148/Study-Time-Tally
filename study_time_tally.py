@@ -132,6 +132,10 @@ def main_menu():
                 t_width = tabs[n]
             n += 1
         n -= 1
+        if t_width % 8 == 0:
+            add_space = True
+        else:
+            add_space = False
         t_width = ceil(t_width/8)
         while n >= 0:
             tabs[n] = t_width - tabs[n]//8
@@ -140,10 +144,10 @@ def main_menu():
         items_present = False
     while not valid_option:
         if items_present:
-            print('\nTally totals:\nName' + '\t'*t_width + 'Hours Oweing\tHours Competed')
+            print('\nTally totals:\nName' + '\t'*t_width + (' ' if add_space else '') + 'Hours Oweing\tHours Competed')
             n = 0
             for subject in settings["subjects"]:
-                print(subject[0] + '\t'*tabs[n] + str(tally_hours(subject[2], subject[3], subject[1])) + '\t\t' + str(subject[4][0]) + 'h ' + str(subject[4][1]) + 'm')
+                print(subject[0] + '\t'*tabs[n] + (' ' if add_space else '') + str(tally_hours(subject[2], subject[3], subject[1])) + '\t\t' + str(subject[4][0]) + 'h ' + str(subject[4][1]) + 'm')
                 n += 1
         else:
             print("Subject list is empty.")
