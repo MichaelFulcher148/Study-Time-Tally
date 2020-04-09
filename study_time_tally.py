@@ -168,7 +168,6 @@ def setup_day_options(start_date, end_date, need_length = True):
         start_date_obj = start_date
         end_date_obj = end_date
     length = (end_date_obj - start_date_obj).days + 1
-    print('setup initial length' + str(length))
     if length == 1:
         if need_length:
             return day_options[start_date_obj.weekday()], length
@@ -220,7 +219,7 @@ def get_hour(day_num):
 
 def create_days_dict(s_day_options, length, returnDayList = False, days = dict()):
     if length == 1:
-        length = day_optins.find(s_day_options)
+        length = day_options.find(s_day_options)
         dayStr = str(length)
         days[dayStr] = None
         print("Course is one day, day is auto-set to " + weekDays[length])
@@ -231,13 +230,13 @@ def create_days_dict(s_day_options, length, returnDayList = False, days = dict()
             print_selected_days(days)
             output = str()
             for day in s_day_options:
-                output += menu_weekDays[day_optins.find(day)] + ", "
+                output += menu_weekDays[day_options.find(day)] + ", "
             print('\n--SELECT DAYS--\n' + output[:-2] + '\nEnter X when finnished.')
             selector = input('Option:').upper()
             if menu_char_check(selector, s_day_options + 'X'):
                 if selector == "X":
                     break
-                dayStr = str(day_optins.find(selector))
+                dayStr = str(day_options.find(selector))
                 days[dayStr] = None
                 if returnDayList:
                     dayList.append(dayStr)
@@ -252,12 +251,17 @@ def create_days_dict(s_day_options, length, returnDayList = False, days = dict()
         return days
 
 def add_menu():
+    name_list = [x[0] for x in settings['subjects']]
     print('\n--ADD SUBJECT MENU--')
     while(1):
         name = input("Name of Subject:")
         if len(name) > 0:
-            break
-        print("Name must be atleast 1 character.")
+            if name not in name_list:
+                break
+            else:
+                print("Name " + name + " already exists.")
+        else:
+            print("Name must be atleast 1 character.")
     print("\nStart Date, format - dd/mm/yyyy.")
     start_date = get_date()
     end_date = validate_end_date(start_date)
@@ -291,7 +295,7 @@ def remove_menu():
                 return False
             elif validate_selector(selector, n):
                 old = settings["subjects"].pop(int(selector))[0]
-                log_tools.tprint("Removed " + old)
+                log_tools.tprint("Removed Subject - " + old)
                 return True
     print("\nSubject list is empty.")
     return False
