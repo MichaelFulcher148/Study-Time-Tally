@@ -541,7 +541,7 @@ def add_to_tally():
                     old_minute = settings['subjects'][selector][4][1]
                     break
                 add_hourAndminute(selector, number, minute)
-                log_tools.tprint("Increased " + settings['subjects'][selector][0] + " from " + str(old) + 'h ' + str(minute) + "m to " + str(settings['subjects'][selector][4][0]) + 'h ' + str(settings['subjects'][selector][4][1]) + 'm.')
+                log_tools.tprint("Increased " + settings['subjects'][selector][0] + " from " + str(old) + 'h ' + str(old_minute) + "m to " + str(settings['subjects'][selector][4][0]) + 'h ' + str(settings['subjects'][selector][4][1]) + 'm.')
                 return True
     print("Subject list in empty.")
     return False
