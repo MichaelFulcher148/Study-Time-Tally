@@ -6,6 +6,7 @@
     Bitcoin: 3EjKSBQka7rHaLqKMXKZ8t7sHDa546GWAd
     Other options @ http://michaelfulcher.yolasite.com/
 """
+'''[0] Name of Subject, [1] Days to iterate required hours up and Amount of hours per day in, [2] Start date, [3] End Date, [4] Hours done'''
 import time, json
 from os import path, rename as file_rename, remove as file_del
 from math import ceil
@@ -21,14 +22,11 @@ menu_mode = 'm'
 data_json_path = r'.\data\study_tally_data.json'
 
 print("Study Time Tally\n\tBy Michael Fulcher\nSend Donations to - PayPal: mjfulcher58@gmail.com or Bitcoin: 3EjKSBQka7rHaLqKMXKZ8t7sHDa546GWAd\nOther donation options @ http://michaelfulcher.yolasite.com/\n\n")
-
 if not path.isdir(r'.\data'):
     from os import makedirs
     makedirs('data')
     log_tools.tprint("Data directory created.")
     del makedirs
-
-
 if path.isfile(data_json_path):
     with open(data_json_path, 'r') as open_file:
         settings = json.load(open_file, parse_int = int)
@@ -47,12 +45,6 @@ def save_json(data, json_path, label):
     with open(json_path, 'w', encoding='utf-8') as out:
         json.dump(data, out, ensure_ascii=False, indent=4)
     log_tools.tprint(label + ' JSON Written')
-
-'''[0] Name of Subject
-    [1] Days to iterate required hours up and Amount of hours per day in
-    [2] Start date
-    [3] End Date
-    [4] Hours done'''
 
 def menu_char_check(a_word, options):
     message = " is not a valid input"
@@ -79,6 +71,15 @@ def get_date():
         if validate_date(date):
             return date
 
+def validate_start_date(end_date, old):
+    while(1):
+        print("\nStart Date, format - dd/mm/yyyy. Current Date (" + old + ")")
+        start_date = get_date()
+        if datetime.strptime(end_date, '%d/%m/%Y').date() > datetime.strptime(start_date, '%d/%m/%Y').date():
+            print("Start date must be before the end date (" + end_date + ").")
+        else:
+            return start_date
+
 def validate_end_date(start_date, old = None):
     while(1):
         if old:
@@ -103,6 +104,7 @@ def tally_hours(start_date, end_date, day_dict):
     weeks = days // 7
     days = days % 7
     weeks_hours = 0
+    ## add holidays!
     for hour in day_dict.values():
         weeks_hours += hour
     hours = weeks * weeks_hours
@@ -151,9 +153,9 @@ def main_menu():
                 n += 1
         else:
             print("Subject list is empty.")
-        print('\n--MAIN MENU--\n\tAdd to (T)ally\n\t(A)dd\n\t(R)emove\n\t(E)dit\n\te(X)it')
+        print('\n--MAIN MENU--\n\tAdd to (T)ally\n\t(A)dd Subject\n\t(R)emove Subject\n\t(E)dit Subject\n\te(X)it')
         menu_option = input("Choose Option:").upper()
-        valid_option = menu_char_check(menu_option, 'TXARE')
+        valid_option = menu_char_check(menu_option, 'TXAREH')
     return menu_option
 
 def print_selected_days(day_list):
@@ -254,18 +256,21 @@ def create_days_dict(s_day_options, length, returnDayList = False, days = dict()
     else:
         return days
 
-def add_menu():
-    name_list = [x[0] for x in settings['subjects']]
-    print('\n--ADD SUBJECT MENU--')
+def get_name(type_text, name_list):
     while(1):
-        name = input("Name of Subject:")
+        name = input("Name of " + type_text + ":")
         if len(name) > 0:
             if name not in name_list:
-                break
+                return name
             else:
                 print("Name " + name + " already exists.")
         else:
             print("Name must be atleast 1 character.")
+
+def add_menu():
+    name_list = [x[0] for x in settings['subjects']]
+    print('\n--ADD SUBJECT--')
+    name = get_name('Subject', name_list)
     print("\nStart Date, format - dd/mm/yyyy.")
     start_date = get_date()
     end_date = validate_end_date(start_date)
@@ -369,7 +374,7 @@ def change_date(subject, date2change, dateWordStr, length, new_start_date_obj, n
 def edit_menu():
     if "subjects" in settings and len(settings['subjects']) > 0:
         while(1):
-            print("\n--EDIT MENU--\nExit and (S)ave Changes\ne(X)it without saving")
+            print("\n--EDIT SUBJECT MENU--\nExit and (S)ave Changes\ne(X)it without saving")
             n = display_subject_list()
             selector = input("Subject to edit:").upper()
             if selector == 'X':
@@ -468,7 +473,7 @@ def edit_menu():
                                             break
                                 elif field == 6: # Edit Tally
                                     print("\n--Edit Tally of " + settings['subjects'][subject_choice][0] + "--\nCurrent Tally: " + str(settings['subjects'][subject_choice][4][0]) + "h " + str(settings['subjects'][subject_choice][4][1]) + "m\nChanges are done by subtracting, not by directed edit.")
-                                    while(1):
+                                    while selector != 'X':
                                         selector = input("--Field to edit:\n1. Hour\n2. Minute\ne(X)it without saving\n:").upper()
                                         if selector == '1':
                                             while(1):
@@ -483,6 +488,7 @@ def edit_menu():
                                                         old = settings['subjects'][subject_choice][4][0]
                                                         settings['subjects'][subject_choice][4][0] -= n
                                                         log_tools.tprint("Decreased " + settings['subjects'][subject_choice][0] + " - hour by " + selector + " from " + str(old) + "h to " + str(settings['subjects'][subject_choice][4][0]) + "h. (Not Saved).")
+                                                        selector = 'X'
                                                         break
                                                 else:
                                                     print("Input must be a number")
@@ -493,7 +499,8 @@ def edit_menu():
                                                     break
                                                 elif selector.isdigit():
                                                     n = int(selector)
-                                                    if n > settings['subjects'][subject_choice][4][0] * 60 + settings['subjects'][subject_choice][4][1]:
+                                                    old = settings['subjects'][subject_choice][4][0] * 60 + settings['subjects'][subject_choice][4][1]
+                                                    if n > old:
                                                         print("Amount to subtract cannot be larger then current hours + minutes (" + str(settings['subjects'][subject_choice][4][0]) + "h " + str(settings['subjects'][subject_choice][4][1]) + "m)")
                                                     else:
                                                         old = settings['subjects'][subject_choice][4][0]
@@ -503,12 +510,11 @@ def edit_menu():
                                                             settings['subjects'][subject_choice][4][1] += 60
                                                             settings['subjects'][subject_choice][4][0] -= 1
                                                         log_tools.tprint("Decreased " + settings['subjects'][subject_choice][0] + " - time by " + selector + " from " + str(old) + "h " + str(old_minute) + "m to " + str(settings['subjects'][subject_choice][4][0]) + "h " + str(settings['subjects'][subject_choice][4][1]) + "m. (Not Saved).")
+                                                        selector = 'X'
                                                         break
                                                 else:
                                                     print("Input must be a number")
-                                        elif selector == "X":
-                                            break
-                                        else:
+                                        elif selector != "X":
                                             print("Invalid input.")
     else:
         print("\nSubject list is empty.")
