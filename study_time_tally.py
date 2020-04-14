@@ -406,7 +406,7 @@ def edit_menu():
                         if validate_selector(selector, n + 1):
                             field = int(selector)
                             if (oneDayCourse == False and field > 6) or (oneDayCourse == True and field > 4): # Change day hours
-                                day = [*settings['subjects'][subject_choice][1].keys()][field - 4 if oneDayCourse else field - 6]
+                                day = [*settings['subjects'][subject_choice][1].keys()][field - 5 if oneDayCourse else field - 7]
                                 while(1):
                                     dayName = weekDays[int(day)]
                                     print("\n--Edit " + settings['subjects'][subject_choice][0] + " " + dayName + "--")
@@ -427,6 +427,7 @@ def edit_menu():
                                         log_tools.tprint("Renamed " + old + " to " + settings['subjects'][subject_choice][0])
                                     else:
                                         print("Name must be atleast 1 character.")
+                                        break
                                 elif field == 2: # Change start date
                                     old = settings['subjects'][subject_choice][2]
                                     while(1):
