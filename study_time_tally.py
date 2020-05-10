@@ -232,6 +232,7 @@ def create_days_dict(s_day_options, length, returnDayList = False, days = dict()
     else:
         if returnDayList:
             dayList = list()
+        day_pick_number = 0
         while(1):
             print_selected_days(days)
             output = str()
@@ -246,6 +247,9 @@ def create_days_dict(s_day_options, length, returnDayList = False, days = dict()
                 days[dayStr] = None
                 if returnDayList:
                     dayList.append(dayStr)
+                day_pick_number += 1
+                if day_pick_number == length:
+                    break
                 n = s_day_options.rfind(selector)
                 s_day_options = s_day_options[:n] + s_day_options[n + 1:]
     for day in days:
