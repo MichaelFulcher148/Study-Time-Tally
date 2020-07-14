@@ -21,7 +21,7 @@ menu_weekDays = ("(M)onday","(T)uesday","(W)ednesday","T(H)ursday","(F)riday","(
 menu_mode = 'm'
 data_json_path = r'.\data\study_tally_data.json'
 
-print("Study Time Tally\n\tBy Michael Fulcher\nSend Donations to - PayPal: mjfulcher58@gmail.com or Bitcoin: 3EjKSBQka7rHaLqKMXKZ8t7sHDa546GWAd\nOther donation options @ http://michaelfulcher.yolasite.com/\n\n")
+print("Study Time Tally\n\tBy Michael Fulcher\nSend Donations to - PayPal: mjfulcher58@gmail.com or Bitcoin: 3EjKSBQka7rHaLqKMXKZ8t7sHDa546GWAd -- Suggestion Donation: $1.50USD\nOther donation options @ http://michaelfulcher.yolasite.com/\n\n")
 if not path.isdir(r'.\data'):
     from os import makedirs
     makedirs('data')
@@ -146,10 +146,10 @@ def main_menu():
         items_present = False
     while not valid_option:
         if items_present:
-            print('\nTally totals:\nName' + '\t'*t_width + (' ' if add_space else '') + 'Hours Oweing\tHours Competed')
+            print('\nTally totals:\nName' + '\t'*t_width + (' ' if add_space else '') + 'Hours Oweing\tHours Completed\tExtra Completed')
             n = 0
             for subject in settings["subjects"]:
-                print(subject[0] + '\t'*tabs[n] + (' ' if add_space else '') + str(tally_hours(subject[2], subject[3], subject[1])) + '\t\t' + str(subject[4][0]) + 'h ' + str(subject[4][1]) + 'm')
+                print(subject[0] + '\t'*tabs[n] + (' ' if add_space else '') + str(tally_hours(subject[2], subject[3], subject[1])) + '\t\t' + str(subject[4][0]) + 'h ' + str(subject[4][1]) + 'm' + '\t\t' + str(subject[5][0]) + 'h ' + str(subject[5][1]) + 'm')
                 n += 1
         else:
             print("Subject list is empty.")
@@ -375,6 +375,53 @@ def change_date(subject, date2change, dateWordStr, length, new_start_date_obj, n
         settings['subjects'][subject][date2change] = newDate
         log_tools.tprint("Changed " + settings['subjects'][subject][0] + " " + dateWordStr + " date from " + old + " to " + settings['subjects'][subject][date2change] + ". (Not Saved)")
 
+def edit_time_tally(subject_choice, time_category):
+    selector = None
+    print("\n--Edit " + ("Normal" if time_category == 4 else "Extra") + " Tally of " + settings['subjects'][subject_choice][0] + "--\nCurrent Tally: " + str(settings['subjects'][subject_choice][time_category][0]) + "h " + str(settings['subjects'][subject_choice][time_category][1]) + "m\nChanges are done by subtracting, not by directed edit.")
+    while selector != 'X':
+        selector = input("--Field to edit:\n1. Hour\n2. Minute\ne(X)it without saving\n:").upper()
+        if selector == '1':
+            while(1):
+                selector = input("Decrease hour by:").upper()
+                if selector == 'X':
+                    break
+                elif selector.isdigit():
+                    n = int(selector)
+                    if settings['subjects'][subject_choice][time_category][0] < n:
+                        print("Amount to subtract cannot be larger than current hours (" + str(settings['subjects'][subject_choice][time_category][0]) + "h)")
+                    else:
+                        old = settings['subjects'][subject_choice][time_category][0]
+                        settings['subjects'][subject_choice][time_category][0] -= n
+                        log_tools.tprint("Decreased " + settings['subjects'][subject_choice][0] + " - hour by " + selector + " from " + str(old) + "h to " + str(settings['subjects'][subject_choice][time_category][0]) + "h. (Not Saved).")
+                        selector = 'X'
+                        break
+                else:
+                    print("Input must be a number")
+        elif selector == '2':
+            while(1):
+                selector = input("Decrease minutes by (can subtract greater than 59minutes):").upper()
+                if selector == 'X':
+                    break
+                elif selector.isdigit():
+                    n = int(selector)
+                    old = settings['subjects'][subject_choice][time_category][0] * 60 + settings['subjects'][subject_choice][time_category][1]
+                    if n > old:
+                        print("Amount to subtract cannot be larger then current hours + minutes (" + str(settings['subjects'][subject_choice][time_category][0]) + "h " + str(settings['subjects'][subject_choice][time_category][1]) + "m)")
+                    else:
+                        old = settings['subjects'][subject_choice][time_category][0]
+                        old_minute = settings['subjects'][subject_choice][time_category][1]
+                        settings['subjects'][subject_choice][time_category][1] -= n
+                        while settings['subjects'][subject_choice][time_category][1] < 0:
+                            settings['subjects'][subject_choice][time_category][1] += 60
+                            settings['subjects'][subject_choice][time_category][0] -= 1
+                        log_tools.tprint("Decreased " + settings['subjects'][subject_choice][0] + " - " + ("Normal" if time_category == 4 else "Extra") + " time by " + selector + " from " + str(old) + "h " + str(old_minute) + "m to " + str(settings['subjects'][subject_choice][time_category][0]) + "h " + str(settings['subjects'][subject_choice][time_category][1]) + "m. (Not Saved).")
+                        selector = 'X'
+                        break
+                else:
+                    print("Input must be a number")
+        elif selector != "X":
+            print("Invalid input.")
+
 def edit_menu():
     if "subjects" in settings and len(settings['subjects']) > 0:
         while(1):
@@ -392,11 +439,11 @@ def edit_menu():
                 while(1): ##if user changes dates do check on day range and incorrect days are selected then - thow error
                     if settings['subjects'][subject_choice][3] == settings['subjects'][subject_choice][2]:
                         oneDayCourse = True
-                        n = 4
+                        n = 5
                     else:
                         oneDayCourse = False
-                        n = 6
-                    print("\n--Edit Subject " + settings['subjects'][subject_choice][0] + "--\ne(X)it to previous menu\n(S)ave changes\n1. Name\n2. Start Date\t\t" + settings['subjects'][subject_choice][2] + "\n3. End Date\t\t" + settings['subjects'][subject_choice][3] + ("\n4. Add Day\n5. Remove Day" if oneDayCourse == False else "") + "\n6. Remove from Tally\t" + str(settings['subjects'][subject_choice][4][0]) + "h " + str(settings['subjects'][subject_choice][4][1]) + "m" + "\n::Edit a Day")
+                        n = 7
+                    print("\n--Edit Subject " + settings['subjects'][subject_choice][0] + "--\ne(X)it to previous menu\n(S)ave changes\n1. Name\n2. Start Date\t\t" + settings['subjects'][subject_choice][2] + "\n3. End Date\t\t" + settings['subjects'][subject_choice][3] + ("\n4. Add Day\n5. Remove Day" if oneDayCourse == False else "") + "\n6. Remove from Normal Tally\t" + str(settings['subjects'][subject_choice][4][0]) + "h " + str(settings['subjects'][subject_choice][4][1]) + "m" + "\n7. Remove from Extra Tally\t" + str(settings['subjects'][subject_choice][5][0]) + "h " + str(settings['subjects'][subject_choice][5][1]) + "m" + "\n::Edit a Day")
                     for day, hour in settings['subjects'][subject_choice][1].items():
                         n += 1
                         print(str(n) + ". " + weekDays[int(day)] + "\t\tHours: " + str(hour))
@@ -409,16 +456,18 @@ def edit_menu():
                     else:
                         if validate_selector(selector, n + 1):
                             field = int(selector)
-                            if (oneDayCourse == False and field > 6) or (oneDayCourse == True and field > 4): # Change day hours
-                                day = [*settings['subjects'][subject_choice][1].keys()][field - 5 if oneDayCourse else field - 7]
+                            if (oneDayCourse == False and field > 7) or (oneDayCourse == True and field > 5): # Change day hours
+                                day = [*settings['subjects'][subject_choice][1].keys()][field - 6 if oneDayCourse else field - 8]
                                 while(1):
                                     dayName = weekDays[int(day)]
-                                    print("\n--Edit " + settings['subjects'][subject_choice][0] + " " + dayName + "--")
-                                    num = input("Number of hours:")
+                                    print("\n--Edit " + settings['subjects'][subject_choice][0] + " " + dayName + "--\n--X to exit.")
+                                    num = input("Number of hours:").upper()
                                     if num.isdecimal():
                                         old = settings['subjects'][subject_choice][1][day]
                                         settings['subjects'][subject_choice][1][day] = int(num)
                                         log_tools.tprint("Changed " + settings['subjects'][subject_choice][0] + " " + dayName + " time from " + str(old) + " to " + str(settings['subjects'][subject_choice][1][day]) + ". (Not Saved)")
+                                        break
+                                    elif num == "X":
                                         break
                                     else:
                                         print("Number must be a decimal number.")
@@ -476,61 +525,20 @@ def edit_menu():
                                             settings['subjects'][subject_choice][1].pop(days[n])
                                             log_tools.tprint("Removed " + weekDays[int(days[n])] + " from " + settings['subjects'][subject_choice][0] + ". (Not Saved)")
                                             break
-                                elif field == 6: # Edit Tally
-                                    print("\n--Edit Tally of " + settings['subjects'][subject_choice][0] + "--\nCurrent Tally: " + str(settings['subjects'][subject_choice][4][0]) + "h " + str(settings['subjects'][subject_choice][4][1]) + "m\nChanges are done by subtracting, not by directed edit.")
-                                    while selector != 'X':
-                                        selector = input("--Field to edit:\n1. Hour\n2. Minute\ne(X)it without saving\n:").upper()
-                                        if selector == '1':
-                                            while(1):
-                                                selector = input("Decrease hour by:").upper()
-                                                if selector == 'X':
-                                                    break
-                                                elif selector.isdigit():
-                                                    n = int(selector)
-                                                    if settings['subjects'][subject_choice][4][0] < n:
-                                                        print("Amount to subtract cannot be larger than current hours (" + str(settings['subjects'][subject_choice][4][0]) + "h)")
-                                                    else:
-                                                        old = settings['subjects'][subject_choice][4][0]
-                                                        settings['subjects'][subject_choice][4][0] -= n
-                                                        log_tools.tprint("Decreased " + settings['subjects'][subject_choice][0] + " - hour by " + selector + " from " + str(old) + "h to " + str(settings['subjects'][subject_choice][4][0]) + "h. (Not Saved).")
-                                                        selector = 'X'
-                                                        break
-                                                else:
-                                                    print("Input must be a number")
-                                        elif selector == '2':
-                                            while(1):
-                                                selector = input("Decrease minutes by (can subtract greater than 59minutes):").upper()
-                                                if selector == 'X':
-                                                    break
-                                                elif selector.isdigit():
-                                                    n = int(selector)
-                                                    old = settings['subjects'][subject_choice][4][0] * 60 + settings['subjects'][subject_choice][4][1]
-                                                    if n > old:
-                                                        print("Amount to subtract cannot be larger then current hours + minutes (" + str(settings['subjects'][subject_choice][4][0]) + "h " + str(settings['subjects'][subject_choice][4][1]) + "m)")
-                                                    else:
-                                                        old = settings['subjects'][subject_choice][4][0]
-                                                        old_minute = settings['subjects'][subject_choice][4][1]
-                                                        settings['subjects'][subject_choice][4][1] -= n
-                                                        while settings['subjects'][subject_choice][4][1] < 0:
-                                                            settings['subjects'][subject_choice][4][1] += 60
-                                                            settings['subjects'][subject_choice][4][0] -= 1
-                                                        log_tools.tprint("Decreased " + settings['subjects'][subject_choice][0] + " - time by " + selector + " from " + str(old) + "h " + str(old_minute) + "m to " + str(settings['subjects'][subject_choice][4][0]) + "h " + str(settings['subjects'][subject_choice][4][1]) + "m. (Not Saved).")
-                                                        selector = 'X'
-                                                        break
-                                                else:
-                                                    print("Input must be a number")
-                                        elif selector != "X":
-                                            print("Invalid input.")
+                                elif field == 6: # Edit Normal Tally
+                                    edit_time_tally(subject_choice, 4)
+                                elif field == 7: # Edit Extra Tally
+                                    edit_time_tally(subject_choice, 5)
     else:
         print("\nSubject list is empty.")
     return False  
 
-def add_hourAndminute(subject, hour, minute):
-    settings['subjects'][subject][4][0] += hour
-    settings['subjects'][subject][4][1] += minute
-    while settings['subjects'][subject][4][1] > 59:
-        settings['subjects'][subject][4][1] -= 60
-        settings['subjects'][subject][4][0] += 1
+def add_hourAndminute(subject, time_category, hour, minute):
+    settings['subjects'][subject][time_category][0] += hour
+    settings['subjects'][subject][time_category][1] += minute
+    while settings['subjects'][subject][time_category][1] > 59:
+        settings['subjects'][subject][time_category][1] -= 60
+        settings['subjects'][subject][time_category][0] += 1
 
 def add_to_tally():
     if "subjects" in settings and len(settings['subjects']) > 0:
@@ -542,17 +550,21 @@ def add_to_tally():
                 return False
             elif validate_selector(selector, n):
                 selector = int(selector)
+                if datetime.strptime(log_tools.run_date, '%d-%m-%Y').date() > datetime.strptime(settings['subjects'][selector][3], '%d/%m/%Y').date():
+                    time_category = 5
+                else:
+                    time_category = 4
                 while(1):
                     print(settings['subjects'][selector][0])
                     number = get_time_digit('hour')
-                    old = settings['subjects'][selector][4][0]
+                    old = settings['subjects'][selector][time_category][0]
                     break
                 while(1):
                     minute = get_time_digit('minute')
-                    old_minute = settings['subjects'][selector][4][1]
+                    old_minute = settings['subjects'][selector][time_category][1]
                     break
-                add_hourAndminute(selector, number, minute)
-                log_tools.tprint("Increased " + settings['subjects'][selector][0] + " from " + str(old) + 'h ' + str(old_minute) + "m to " + str(settings['subjects'][selector][4][0]) + 'h ' + str(settings['subjects'][selector][4][1]) + 'm.')
+                add_hourAndminute(selector, time_category, number, minute)
+                log_tools.tprint("Increased " + settings['subjects'][selector][0] + ("Normal" if time_category == 4 else "Extra") + " Hours from " + str(old) + 'h ' + str(old_minute) + "m to " + str(settings['subjects'][selector][time_category][0]) + 'h ' + str(settings['subjects'][selector][time_category][1]) + 'm.')
                 return True
     print("Subject list in empty.")
     return False
@@ -567,7 +579,7 @@ while menu_mode != 'X':
     elif menu_mode == 'A':
         if 'subjects' not in settings:
             settings['subjects'] = list()
-        settings['subjects'].append(add_menu() + [[0,0]])
+        settings['subjects'].append(add_menu() + [[0,0],[0,0]])
         save_json(settings, data_json_path, "Settings")
         menu_mode = 'm'
     elif menu_mode == 'R':
