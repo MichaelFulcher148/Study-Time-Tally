@@ -12,7 +12,7 @@ Track your study hours.
 Install Python 3.7+<br />
         
     Copy to a folder the following files:
-    study_time_tally.py log_tools.py
+    study_time_tally.py log_tools.py code_tools.py
     
 ### Run script:
     Open Command Prompt:
