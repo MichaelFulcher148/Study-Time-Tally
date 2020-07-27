@@ -92,6 +92,17 @@ def validate_end_date(start_date, old = None):
         else:
             return end_date
 
+'''found @: https://stackoverflow.com/questions/9044084/efficient-date-range-overlap-calculation-in-python
+    requires passed vars to be datetime objects'''
+def overlap_check(start_of_range1, end_of_range1, start_of_range2, end_of_range2):
+    latest_start = max(start_of_range1, start_of_range2)
+    earliest_end = min(end_of_range1, end_of_range2)
+    delta = (earliest_end - latest_start).days + 1
+    if delta > 0:
+        return True
+    else:
+        return False
+
 def tally_hours(start_date, end_date, day_dict):
     date_start = datetime.strptime(start_date, '%d/%m/%Y').date()
     date_today = datetime.today().date()
@@ -100,48 +111,102 @@ def tally_hours(start_date, end_date, day_dict):
     date_end = datetime.strptime(end_date, '%d/%m/%Y').date()
     if date_end < date_today:
         date_today = date_end
-    days = (date_today - date_start).days + 1
-    weeks = days // 7
-    days = days % 7
+    range_list = [[date_start, date_today]]
+    if 'holidays' in settings and len(settings['holidays']) > 0:
+        holiday_list = list()
+        holiday_dict = dict()
+        for name, date in settings['holidays'].items():
+            holiday_start = datetime.strptime(date[0], '%d/%m/%Y').date()
+            holiday_end = datetime.strptime(date[1], '%d/%m/%Y').date()
+            if overlap_check(date_start, date_today, holiday_start, holiday_end):
+                holiday_list.append(name)
+                holiday_dict[name] = [holiday_start, holiday_end]
+        one_day = timedelta(days=1)
+        rangelist_size = 1
+        for holiday in holiday_dict.values():
+            n = 0
+            while n < rangelist_size:
+    ##            holiday_start = holiday[0]
+    ##            holiday_end = holiday[1]
+    ##            term_end = range_list[n][1]
+    ##            term_start = range_list[n][0]
+                if holiday[0] > range_list[n][1] or holiday[1] < range_list[n][0]: #filter out pointless tests
+                    n += 1
+                    continue
+                if holiday[0] <= range_list[n][0]: # holiday starts before or start of term
+                    if holiday[1] >= range_list[n][1]:
+                        range_list.pop(n)
+                        rangelist_size -= 1
+                    else:
+                        range_list[n][0] = holiday[1] + one_day
+                        n += 1
+                else: #holiday starts after 'term' starts.
+                    new_end = holiday[0] - one_day
+                    if holiday[1] < range_list[n][1]:
+                        range_list.append([holiday[1] + one_day, range_list[n][1]])
+                        range_list[n][1] = new_end
+                        rangelist_size += 1
+                        break
+                    else:
+                        range_list[n][1] = new_end
+                        n += 1
+    n = 0 # n var repurposed to grand total of hours
     weeks_hours = 0
-    ## add holidays!
     for hour in day_dict.values():
         weeks_hours += hour
-    hours = weeks * weeks_hours
-    if days != 0:
-        weeks = date_today.weekday()
-        while days >= 0:
-            sch = str(weeks)
-            if sch in day_dict.keys():
-                hours += day_dict[sch]
-            days -= 1
-            if weeks == 0:
-                weeks = 6
-            else:
-                weeks -= 1
-    return hours
+    for i in range_list:
+        days = (i[1] - i[0]).days + 1
+        weeks = days // 7
+        days = days % 7 # days var repurposed to length of week.
+        hours = weeks * weeks_hours
+        if days != 0:
+            weeks = i[1].weekday() # weeks repurposed to 'day of week number'
+            while days >= 0:
+                sch = str(weeks)
+                if sch in day_dict.keys():
+                    hours += day_dict[sch]
+                days -= 1
+                if weeks == 0:
+                    weeks = 6
+                else:
+                    weeks -= 1
+        n += hours
+    return n
+
+def tabs_list(a_list): ## generate data for correct spacing in data display coloumns
+    t_width = 0
+    n = 0
+    tabs = list()
+    for item_name in a_list:
+        tabs.append(len(item_name))
+        if tabs[n] > t_width:
+            t_width = tabs[n]
+        n += 1
+    n -= 1
+    if t_width % 8 == 0:
+        add_space = True
+    else:
+        add_space = False
+    t_width = ceil(t_width/8)
+    while n >= 0:
+        tabs[n] = t_width - tabs[n]//8
+        n -= 1
+    return t_width, add_space, tabs
+
+def display_holiday_list(add_numbers = False):
+    t_width, add_space, tabs = tabs_list([*settings['holidays'].keys()])
+    print('\nSaved Holidays:\n' + ('\t' if add_numbers else '') + 'Name' + '\t'*t_width + (' ' if add_space else '') + 'Start Date\tEnd Date')
+    n = 0
+    for holiday,dates in settings['holidays'].items():
+        print((str(n) + '.\t' if add_numbers else '') + holiday + '\t'*tabs[n] + (' ' if add_space else '') + dates[0] + '\t' + dates[1])
+        n += 1
+    return n
 
 def main_menu():
     valid_option = False
     if "subjects" in settings and len(settings["subjects"]) > 0:
         items_present = True
-        tabs = list()
-        t_width = 0
-        n = 0
-        for subject in settings['subjects']:
-            tabs.append(len(subject[0]))
-            if tabs[n] > t_width:
-                t_width = tabs[n]
-            n += 1
-        n -= 1
-        if t_width % 8 == 0:
-            add_space = True
-        else:
-            add_space = False
-        t_width = ceil(t_width/8)
-        while n >= 0:
-            tabs[n] = t_width - tabs[n]//8
-            n -= 1
+        t_width, add_space, tabs = tabs_list([i[0] for i in settings['subjects']])
     else:
         items_present = False
     while not valid_option:
@@ -153,7 +218,7 @@ def main_menu():
                 n += 1
         else:
             print("Subject list is empty.")
-        print('\n--MAIN MENU--\n\tAdd to (T)ally\n\t(A)dd Subject\n\t(R)emove Subject\n\t(E)dit Subject\n\te(X)it')
+        print('\n--MAIN MENU--\n\tAdd to (T)ally\n\t(A)dd Subject\n\t(R)emove Subject\n\t(E)dit Subject\n\t(H)olidays Menu\n\te(X)it')
         menu_option = input("Choose Option:").upper()
         valid_option = menu_char_check(menu_option, 'TXAREH')
     return menu_option
@@ -569,6 +634,81 @@ def add_to_tally():
     print("Subject list in empty.")
     return False
 
+def holiday_menu():
+    while(1):
+        if len(settings['holidays']) > 0:
+            holiday_names = [*settings['holidays'].keys()]
+            display_holiday_list()
+            num_options = True
+            print("\n--HOLIDAY MENU--\nExit and (S)ave Changes\ne(X)it without saving\n\t1. Add Holiday\n\t2. Remove Holiday\n\t3. Edit Holiday")
+        else:
+            print('\nNo holidays saved.')#make menu change when holiday list empty...
+            num_options = False
+            print('\n--HOLIDAY MENU--\nExit and (S)ave Changes\ne(X)it without saving\n\t1. Add Holiday\n')
+        selector = input(("Option:" if num_options == True else "Field to edit:")).upper()
+        if menu_char_check(selector, 'SX' + ('1' if num_options == False else '123')):
+            if selector == '1':
+                name = get_name('Holiday', holiday_names)
+                print("\nStart Date, format - dd/mm/yyyy.")
+                start_date = get_date()
+                end_date = validate_end_date(start_date)
+                holiday_names.append(name)
+                names_length += 1
+                settings['holidays'][name] = [start_date, end_date]
+                log_tools.tprint('Added ' + name + ' to Saved Holidays. (Not Saved).')
+            elif selector == '2':
+                while(1):
+                    print('\n--REMOVE HOLIDAY MENU--\ne(X)it\n')
+                    n = display_holiday_list(True)
+                    field = input('Holiday to remove:').upper()
+                    if selector == "X":
+                        break
+                    elif validate_selector(field, n):
+                        num = int(field)
+                        old_name = holiday_names[num]
+                        settings['holidays'].pop(holiday_names[num])
+                        holiday_names.pop(num)
+                        log_tools.tprint('Removed ' + old_name + " from Saved Holidays. (Not Saved)")
+                        break
+            elif selector == '3':
+                while(1):
+                    print('\n--EDIT HOLIDAY MENU--\ne(X)it\n')
+                    n = display_holiday_list(True)
+                    field = input('Holiday to edit:').upper()
+                    if field == 'X':
+                        break
+                    elif validate_selector(field, n):
+                        num = int(field)
+                        while(1):
+                            print('\n--EDIT HOLIDAY ' + holiday_names[num] + '--\ne(X)it to previous menu\n(S)ave changes\n\t1. Name\n\t2. Start Date\t' + settings['holidays'][holiday_names[num]][0] + '\n\t3. End Date\t' + settings['holidays'][holiday_names[num]][1])
+                            field = input('Field to edit:').upper()
+                            if field == '1':
+                                selector = get_name('holiday', holiday_names)
+                                old = holiday_names[num]
+                                settings['holidays'][selector] = settings['holidays'].pop(old)
+                                holiday_names.pop(num)
+                                holiday_names.append(selector)
+                                log_tools.tprint("Renamed holiday - " + old + " to " + selector)
+                                break
+                            elif field == '2':
+                                old = settings['holidays'][holiday_names[num]][0]
+                                settings['holidays'][holiday_names[num]][0] = validate_start_date(settings['holidays'][holiday_names[num]][1], settings['holidays'][holiday_names[num]][0])
+                                log_tools.tprint('Changed holiday - ' + holiday_names[num] + ' from ' + old + ' to ' + settings['holidays'][holiday_names[num]][0])
+                                break
+                            elif field == '3':
+                                old = settings['holidays'][holiday_names[num]][1]
+                                settings['holidays'][holiday_names[num]][1] = validate_end_date(settings['holidays'][holiday_names[num]][0], settings['holidays'][holiday_names[num]][1])
+                                log_tools.tprint('Changed holiday - ' + holiday_names[num] + ' from ' + old + ' to ' + settings['holidays'][holiday_names[num]][1])
+                                break
+                            elif field == 'X':
+                                break
+                            else:
+                                print("Invalid input.")
+            elif selector == 'X':
+                return False
+            elif selector == 'S':
+                return True
+
 while menu_mode != 'X':
     if menu_mode == 'm':
         menu_mode = main_menu()
@@ -588,6 +728,12 @@ while menu_mode != 'X':
         menu_mode = 'm'
     elif menu_mode == 'E':
         if edit_menu() == True:
+            save_json(settings, data_json_path, "Settings")
+        menu_mode = 'm'
+    elif menu_mode == 'H':
+        if 'holidays' not in settings:
+            settings['holidays'] = dict()
+        if holiday_menu() == True:
             save_json(settings, data_json_path, "Settings")
         menu_mode = 'm'
 print("\nBye.")
