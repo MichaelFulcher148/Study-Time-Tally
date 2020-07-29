@@ -21,7 +21,7 @@ menu_weekDays = ("(M)onday","(T)uesday","(W)ednesday","T(H)ursday","(F)riday","(
 menu_mode = 'm'
 data_json_path = r'.\data\study_tally_data.json'
 
-print("Study Time Tally\n\tBy Michael Fulcher\nSend Donations to - PayPal: mjfulcher58@gmail.com or Bitcoin: 3EjKSBQka7rHaLqKMXKZ8t7sHDa546GWAd -- Suggestion Donation: $1.50USD\nOther donation options @ http://michaelfulcher.yolasite.com/\n\n")
+print("Study Time Tally\n\tBy Michael Fulcher\nSend Donations to - PayPal: mjfulcher58@gmail.com or Bitcoin: 3EjKSBQka7rHaLqKMXKZ8t7sHDa546GWAd -- Suggested Donation: $1.50USD\nOther donation options @ http://michaelfulcher.yolasite.com/\n\n")
 if not path.isdir(r'.\data'):
     from os import makedirs
     makedirs('data')
@@ -154,23 +154,28 @@ def tally_hours(start_date, end_date, day_dict):
     weeks_hours = 0
     for hour in day_dict.values():
         weeks_hours += hour
-    for i in range_list:
-        days = (i[1] - i[0]).days + 1
-        weeks = days // 7
+    for i in range_list:        
+        weeks = i[0].weekday()
+        days = (i[1] - i[0]).days + (1 if weeks == 0 else weeks - 6)
+        while weeks not in [0,7]:
+            sch = str(weeks)
+            if sch in day_dict.keys():
+                n += day_dict[sch]
+            weeks += 1
+        weeks = days // 7 # weeks repurposed to 'number of weeks'
         days = days % 7 # days var repurposed to length of week.
-        hours = weeks * weeks_hours
+        n += weeks * weeks_hours
         if days != 0:
             weeks = i[1].weekday() # weeks repurposed to 'day of week number'
             while days >= 0:
                 sch = str(weeks)
                 if sch in day_dict.keys():
-                    hours += day_dict[sch]
+                    n += day_dict[sch]
                 days -= 1
                 if weeks == 0:
                     weeks = 6
                 else:
                     weeks -= 1
-        n += hours
     return n
 
 def tabs_list(a_list): ## generate data for correct spacing in data display coloumns
@@ -643,6 +648,7 @@ def holiday_menu():
             print("\n--HOLIDAY MENU--\nExit and (S)ave Changes\ne(X)it without saving\n\t1. Add Holiday\n\t2. Remove Holiday\n\t3. Edit Holiday")
         else:
             print('\nNo holidays saved.')#make menu change when holiday list empty...
+            holiday_names = list()
             num_options = False
             print('\n--HOLIDAY MENU--\nExit and (S)ave Changes\ne(X)it without saving\n\t1. Add Holiday\n')
         selector = input(("Option:" if num_options == True else "Field to edit:")).upper()
@@ -653,7 +659,6 @@ def holiday_menu():
                 start_date = get_date()
                 end_date = validate_end_date(start_date)
                 holiday_names.append(name)
-                names_length += 1
                 settings['holidays'][name] = [start_date, end_date]
                 log_tools.tprint('Added ' + name + ' to Saved Holidays. (Not Saved).')
             elif selector == '2':
