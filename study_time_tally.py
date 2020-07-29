@@ -67,7 +67,7 @@ def validate_date(date_text):
 
 def get_date():
     while(1):
-        date = input(":")
+        date = input("Enter Date (dd/mm/yyyy):")
         if validate_date(date):
             return date
 
