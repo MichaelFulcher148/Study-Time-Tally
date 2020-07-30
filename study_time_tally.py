@@ -216,10 +216,11 @@ def main_menu():
         items_present = False
     while not valid_option:
         if items_present:
-            print('\nTally totals:\nName' + '\t'*t_width + (' ' if add_space else '') + 'Hours Oweing\tHours Completed\tExtra Completed')
+            print('\nTally totals:\nName' + '\t'*t_width + (' ' if add_space else '') + 'Hours Oweing\tHours Completed\t%\t|Extra Completed %')
             n = 0
             for subject in settings["subjects"]:
-                print(subject[0] + '\t'*tabs[n] + (' ' if add_space else '') + str(tally_hours(subject[2], subject[3], subject[1])) + '\t\t' + str(subject[4][0]) + 'h ' + str(subject[4][1]) + 'm' + '\t\t' + str(subject[5][0]) + 'h ' + str(subject[5][1]) + 'm')
+                hours = tally_hours(subject[2], subject[3], subject[1])
+                print(subject[0] + '\t'*tabs[n] + (' ' if add_space else '') + str(hours) + '\t\t' + str(subject[4][0]) + 'h ' + str(subject[4][1]) + 'm' + '\t\t' + '{:.1%}'.format((subject[4][0] * 60 + subject[4][1]) / (hours * 60)) + '\t|' + str(subject[5][0]) + 'h ' + str(subject[5][1]) + 'm' + '\t\t ' + '{:.1%}'.format(((subject[4][0] + subject[5][0]) * 60 + subject[4][1] + subject[5][1]) / (hours * 60)))
                 n += 1
         else:
             print("Subject list is empty.")
