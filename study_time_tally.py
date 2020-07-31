@@ -41,6 +41,8 @@ else:
     settings['display completed %'] = True
     settings['display extra completed'] = False
     settings['display extra completed %'] = False
+    settings['tallyEditHour'] = True
+    settings['tallyEditMinute'] = True
 
 def save_json(data, json_path, label):
     json_path_old = json_path[:-4] + 'old'
@@ -216,6 +218,22 @@ def display_holiday_list(add_numbers = False):
         n += 1
     return n
 
+def hours_display(item1, item2):
+    output = str()
+    if settings['display completed %']:
+        output += item1
+    else:
+        if settings['display extra completed'] and not settings['display extra completed %']:
+            output += '\t'
+    if settings['display extra completed']:
+        if settings['display completed %']:
+            output += '\t'
+        else:
+            if settings['display extra completed %']:
+                output += '\t'
+        output += item2
+    return output
+
 def main_menu():
     valid_option = False
     if "subjects" in data and len(data["subjects"]) > 0:
@@ -225,11 +243,25 @@ def main_menu():
         items_present = False
     while not valid_option:
         if items_present:
-            print('\nTally totals:\nName' + '\t'*t_width + (' ' if add_space else '') + 'Hours Oweing\tHours Completed' + ('\t%\t' if settings['display completed %'] == True else ('\t' if settings['display extra completed %'] == False else '')) + ('|Extra Completed' if settings['display extra completed'] == True else '\t') + (' %' if settings['display extra completed %'] == True else ''))
+            line = '\nTally totals:\nName' + '\t'*t_width + (' ' if add_space else '') + 'Hours Oweing\tHours Completed'
+            line += hours_display('\t%', '|Extra Completed')
+            if settings['display extra completed %']:
+                if not settings['display extra completed']:
+                    line += '\t|'
+                line += ' %'
+            print(line)
             n = 0
             for subject in data["subjects"]:
                 hours = tally_hours(subject[2], subject[3], subject[1])
-                print(subject[0] + '\t'*tabs[n] + (' ' if add_space else '') + str(hours) + '\t\t' + str(subject[4][0]) + 'h ' + str(subject[4][1]) + 'm\t' + ('\t{:.1%}'.format((subject[4][0] * 60 + subject[4][1]) / (hours * 60)) if settings['display completed %'] == True else '') + ('\t|' + str(subject[5][0]) + 'h ' + str(subject[5][1]) + 'm' if settings['display extra completed'] == True else '') + ('\t\t {:.1%}'.format(((subject[4][0] + subject[5][0]) * 60 + subject[4][1] + subject[5][1]) / (hours * 60)) if settings['display extra completed %'] == True else ''))
+                line = subject[0] + '\t'*tabs[n] + (' ' if add_space else '') + str(hours)+ '\t\t' + str(subject[4][0]) + 'h ' + str(subject[4][1]) + 'm\t'
+                line += hours_display('\t{:.1%}'.format((subject[4][0] * 60 + subject[4][1]) / (hours * 60)), '|' + str(subject[5][0]) + 'h ' + str(subject[5][1]) + 'm\t')
+                if settings['display extra completed %']:
+                    if not settings['display extra completed']:
+                        line += '\t|'
+                    else:
+                        line += '\t '
+                    line += '{:.1%}'.format(((subject[4][0] + subject[5][0]) * 60 + subject[4][1] + subject[5][1]) / (hours * 60))
+                print(line)
                 n += 1
         else:
             print("Subject list is empty.")
@@ -634,17 +666,23 @@ def add_to_tally():
                     time_category = 5
                 else:
                     time_category = 4
-                while(1):
-                    print(data['subjects'][selector][0])
-                    number = get_time_digit('hour')
-                    old = data['subjects'][selector][time_category][0]
-                    break
-                while(1):
-                    minute = get_time_digit('minute')
-                    old_minute = data['subjects'][selector][time_category][1]
-                    break
-                add_hourAndminute(selector, time_category, number, minute)
-                log_tools.tprint("Increased " + data['subjects'][selector][0] + (" Normal" if time_category == 4 else " Extra") + " Hours from " + str(old) + 'h ' + str(old_minute) + "m to " + str(data['subjects'][selector][time_category][0]) + 'h ' + str(data['subjects'][selector][time_category][1]) + 'm.')
+                print("Adding to Tally of " + data['subjects'][selector][0])
+                if settings['tallyEditHour']:
+                    while(1):
+                        hour = get_time_digit('hour')
+                        break
+                else:
+                    hour = 0
+                if settings['tallyEditMinute']:
+                    while(1):
+                        minute = get_time_digit('minute')
+                        break
+                else:
+                    minute = 0
+                old_hour = data['subjects'][selector][time_category][0]
+                old_minute = data['subjects'][selector][time_category][1]
+                add_hourAndminute(selector, time_category, hour, minute)
+                log_tools.tprint("Increased " + data['subjects'][selector][0] + (" Normal" if time_category == 4 else " Extra") + " Hours from " + str(old_hour) + 'h ' + str(old_minute) + "m to " + str(data['subjects'][selector][time_category][0]) + 'h ' + str(data['subjects'][selector][time_category][1]) + 'm.')
                 return True
     print("Subject list in empty.")
     return False
@@ -724,9 +762,19 @@ def holiday_menu():
             elif selector == 'S':
                 return True
 
+def get_description_of_tally_setting():
+    return 'Both' if settings['tallyEditHour'] and settings['tallyEditMinute'] else 'Hour' if settings['tallyEditHour'] else 'Minute'
+
+def change_tally_usage_setting(new_hour_bol, new_minute_bol):
+    old = get_description_of_tally_setting()
+    settings['tallyEditMinute'] = new_minute_bol
+    settings['tallyEditHour'] = new_hour_bol
+    log_tools.tprint('Changed Tally Usage - from ' + old + ' to ' + get_description_of_tally_setting() + " (Not Saved)")
+
 def settings_menu():
     while(1):
-        print("\n--CURRENT SETTINGS--" + '\n1. Display Completed Percent:\t\t' + str(settings['display completed %']) + '\n2. Display extra completed:\t\t' + str(settings['display extra completed']) + '\n3. Display extra Completed Percent:\t' + str(settings['display extra completed %']))
+        print("\n--CURRENT SETTINGS--\n\t--Main Menu Display--\n\t1. Display Completed Percent:\t\t" + str(settings['display completed %']) + '\n\t2. Display extra completed:\t\t' + str(settings['display extra completed']) + '\n\t3. Display extra Completed Percent:\t' + str(settings['display extra completed %']))
+        print('\n--Usage--\n\t(E)dit tallys by:\t' + get_description_of_tally_setting())
         print("\n--SETTINGS MENU--\nExit and (S)ave Changes\ne(X)it without saving")
         selector = input('Option to toggle, or command:').upper()
         if selector == 'X':
@@ -735,10 +783,30 @@ def settings_menu():
             return True
         elif selector == '1':
             settings['display completed %'] = not settings['display completed %']
+            log_tools.tprint('Changed Display completed Percent - from ' + str(not settings['display completed %']) + ' to ' + str(settings['display completed %']) + " (Not Saved)")
         elif selector == '2':
             settings['display extra completed'] = not settings['display extra completed']
+            log_tools.tprint('Changed Display extra completed Minute and Hour - from ' + str(not settings['display extra completed']) + ' to ' + str(settings['display extra completed']) + " (Not Saved)")
         elif selector == '3':
             settings['display extra completed %'] = not settings['display extra completed %']
+            log_tools.tprint('Changed Display extra completed Percent - from ' + str(not settings['display extra completed %']) + ' to ' + str(settings['display extra completed %']) + " (Not Saved)")
+        elif selector == 'E':
+            while(1):
+                print('--Change Tally Edit Method--\n\t(M)inute\n\t(H)our\n\t(B)oth\n\te(X)it')
+                field = input("Choose Option:").upper()
+                if field == 'M':
+                    change_tally_usage_setting(False, True)
+                    break
+                elif field == 'H':
+                    change_tally_usage_setting(True, False)
+                    break
+                elif field == 'B':
+                    change_tally_usage_setting(True, True)
+                    break
+                elif field == 'X':
+                    break
+                else:
+                    print("Invalid input.")
         else:
             print("Invalid input.")
 
