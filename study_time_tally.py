@@ -771,6 +771,10 @@ def change_tally_usage_setting(new_hour_bol, new_minute_bol):
     settings['tallyEditHour'] = new_hour_bol
     log_tools.tprint('Changed Tally Usage - from ' + old + ' to ' + get_description_of_tally_setting() + " (Not Saved)")
 
+def toggle_boolean_setting(setting_key):
+    settings[setting_key] = not settings[setting_key]
+    log_tools.tprint('Changed ' + setting_key + ' - from ' + str(not settings[setting_key]) + ' to ' + str(settings[setting_key]) + " (Not Saved)")
+
 def settings_menu():
     while(1):
         print("\n--CURRENT SETTINGS--\n\t--Main Menu Display--\n\t1. Display Completed Percent:\t\t" + str(settings['display completed %']) + '\n\t2. Display extra completed:\t\t' + str(settings['display extra completed']) + '\n\t3. Display extra Completed Percent:\t' + str(settings['display extra completed %']))
@@ -782,14 +786,11 @@ def settings_menu():
         elif selector == 'S':
             return True
         elif selector == '1':
-            settings['display completed %'] = not settings['display completed %']
-            log_tools.tprint('Changed Display completed Percent - from ' + str(not settings['display completed %']) + ' to ' + str(settings['display completed %']) + " (Not Saved)")
+            toggle_boolean_setting('display completed %')
         elif selector == '2':
-            settings['display extra completed'] = not settings['display extra completed']
-            log_tools.tprint('Changed Display extra completed Minute and Hour - from ' + str(not settings['display extra completed']) + ' to ' + str(settings['display extra completed']) + " (Not Saved)")
+            toggle_boolean_setting('display extra completed')
         elif selector == '3':
-            settings['display extra completed %'] = not settings['display extra completed %']
-            log_tools.tprint('Changed Display extra completed Percent - from ' + str(not settings['display extra completed %']) + ' to ' + str(settings['display extra completed %']) + " (Not Saved)")
+            toggle_boolean_setting('display extra completed %')    
         elif selector == 'E':
             while(1):
                 print('--Change Tally Edit Method--\n\t(M)inute\n\t(H)our\n\t(B)oth\n\te(X)it')
