@@ -26,7 +26,7 @@ menu_weekDays = ("(M)onday","(T)uesday","(W)ednesday","T(H)ursday","(F)riday","(
 menu_mode = 'm'
 data_json_path = r'.\data\study_tally_data.json'
 settings_json_path = r'.\data\study_tally_settings.json'
-s = None
+s = True
 
 print("Study Time Tally\n\tBy Michael Fulcher\nSend Donations to - PayPal: mjfulcher58@gmail.com or Bitcoin: 3EjKSBQka7rHaLqKMXKZ8t7sHDa546GWAd -- Suggested Donation: $1.50USD\nOther donation options @ http://michaelfulcher.yolasite.com/\n\n")
 if not path.isdir(r'.\data'):
@@ -652,24 +652,32 @@ def edit_menu():
     return False
 
 def add_hourAndminute(subject, time_category, hour, minute):
+    old_hour = data['subjects'][subject][time_category][0]
+    old_minute = data['subjects'][subject][time_category][1]
     data['subjects'][subject][time_category][0] += hour
     data['subjects'][subject][time_category][1] += minute
     while data['subjects'][subject][time_category][1] > 59:
         data['subjects'][subject][time_category][1] -= 60
         data['subjects'][subject][time_category][0] += 1
+    log_tools.tprint("Increased " + data['subjects'][subject][0] + (" Normal" if time_category == 4 else " Extra") + " Hours from " + str(old_hour) + 'h ' + str(old_minute) + "m to " + str(data['subjects'][subject][time_category][0]) + 'h ' + str(data['subjects'][subject][time_category][1]) + 'm.')
 
 def time_convert_str(sec):
     mins = sec // 60
-    sec = sec % 60
-    hours = mins // 60
-    mins = mins % 60
-    return '{0}:{1}:{2}'.format(int(hours), int(mins), int(sec))
+    sec = int(sec % 60)
+    hours = int(mins // 60)
+    mins = int(mins % 60)
+    return ('0' + str(hours) if hours < 10 else str(hours)) + ':' + ('0' + str(mins) if mins < 10 else str(mins)) + ':' + ('0' + str(sec) if sec < 10 else str(sec))
 
 def thread_timer_cancel():
     global s
-    s = input()
+    while(1):
+        u = input()
+        if u == '':
+            s = False
+            break
 
 def timer_tally():
+    global s
     if "subjects" in data and len(data['subjects']) > 0:
         if use_live_update_timer:
             x = threading.Thread(target=thread_timer_cancel)
@@ -685,30 +693,40 @@ def timer_tally():
                 print("\nAdding to Tally of " + data['subjects'][selector][0])
                 print('NOTE: Time spans lower than 1 minute will not be saved.')
                 c = input('\nPress Enter to start or X to Exit:').upper()
-                if c != 'X':
+                if c == 'X':
+                    return False
+                elif c == '':
                     start_time = time.time()
                     log_tools.tprint('Timer for ' + data['subjects'][selector][0] + ' started at ' + time.strftime('%H:%M:%S',time.localtime(start_time)))
                     if use_live_update_timer:
                         x.start()
                         print('Press Enter to stop timer')
-                        while s == None:
+                        while s:
                             current_time = time.time()
                             sys.stdout.write('\rTime Lapsed = ' + time_convert_str(current_time - start_time))
                             sys.stdout.flush()
                             time.sleep(0.5)
                     else:
-                        input('Press Enter to stop timer')
+                        while s:
+                            c = input('Press Enter to stop timer')
+                            if c == '':
+                                s = False
+                            else:
+                                print('Invalid command.')
                     current_time = time.time()
                     current_time = current_time - start_time #current_time repurposed to length of time span
                     current_time = int(current_time // 60) #current_time repurposed to minutes
                     hours = current_time // 60
                     print('Timer stopped at ' + (('{0}minute'.format(current_time) + ('' if current_time == 1 else 's')) if hours == 0 else '{0}hour'.format(hours) + (' ' if hours == 1 else 's ') + '{0}minute'.format(current_time) + ('' if current_time == 1 else 's')) + '\n')
-                    old_hour = data['subjects'][selector][time_category][0]
-                    old_minute = data['subjects'][selector][time_category][1]
-                    add_hourAndminute(selector, time_category, hours, current_time)
-                    log_tools.tprint("Increased " + data['subjects'][selector][0] + (" Normal" if time_category == 4 else " Extra") + " Hours from " + str(old_hour) + 'h ' + str(old_minute) + "m to " + str(data['subjects'][selector][time_category][0]) + 'h ' + str(data['subjects'][selector][time_category][1]) + 'm.')
-                    return True
+                    s = True
+                    if current_time != 0 or hours != 0:
+                        add_hourAndminute(selector, time_category, hours, current_time)                    
+                        return True
+                    else:
+                        log_tools.tprint('Time span for ' + data['subjects'][selector][0] + ' was less than 1 minute, nothing saved.')
+                        return False
                 else:
+                    print('Invalid command, returning to main menu.')
                     return False
     print("Subject list in empty.")
     return False
@@ -737,10 +755,7 @@ def add_to_tally():
                         break
                 else:
                     minute = 0
-                old_hour = data['subjects'][selector][time_category][0]
-                old_minute = data['subjects'][selector][time_category][1]
                 add_hourAndminute(selector, time_category, hour, minute)
-                log_tools.tprint("Increased " + data['subjects'][selector][0] + (" Normal" if time_category == 4 else " Extra") + " Hours from " + str(old_hour) + 'h ' + str(old_minute) + "m to " + str(data['subjects'][selector][time_category][0]) + 'h ' + str(data['subjects'][selector][time_category][1]) + 'm.')
                 return True
     print("Subject list in empty.")
     return False
