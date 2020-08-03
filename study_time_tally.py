@@ -11,22 +11,23 @@ import time, json, sys
 from os import path, rename as file_rename, remove as file_del
 from math import ceil
 from datetime import date, timedelta, datetime
-import log_tools    
+import log_tools
 if 'idlelib.run' in sys.modules:
     use_live_update_timer = False
 else:
     import threading
+    from msvcrt import getwch
     use_live_update_timer = True
 log_tools.script_id = "StudyTimeTally"
 log_tools.run_date = time.strftime('%d-%m-%Y', time.localtime())
 log_tools.initialize(False)
-day_options = 'MTWHFSU'
-weekDays = ("Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday")
-menu_weekDays = ("(M)onday","(T)uesday","(W)ednesday","T(H)ursday","(F)riday","(S)aturday","S(U)nday")
+s = True
 menu_mode = 'm'
+day_options = 'MTWHFSU'
 data_json_path = r'.\data\study_tally_data.json'
 settings_json_path = r'.\data\study_tally_settings.json'
-s = True
+weekDays = ("Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday")
+menu_weekDays = ("(M)onday","(T)uesday","(W)ednesday","T(H)ursday","(F)riday","(S)aturday","S(U)nday")
 
 print("Study Time Tally\n\tBy Michael Fulcher\nSend Donations to - PayPal: mjfulcher58@gmail.com or Bitcoin: 3EjKSBQka7rHaLqKMXKZ8t7sHDa546GWAd -- Suggested Donation: $1.50USD\nOther donation options @ http://michaelfulcher.yolasite.com/\n\n")
 if not path.isdir(r'.\data'):
@@ -220,7 +221,7 @@ def display_holiday_list(add_numbers = False):
     print('\nSaved Holidays:\n' + ('\t' if add_numbers else '') + 'Name' + '\t'*t_width + (' ' if add_space else '') + 'Start Date\tEnd Date')
     n = 0
     for holiday,dates in data['holidays'].items():
-        print((str(n) + '.\t' if add_numbers else '') + holiday + '\t'*tabs[n] + (' ' if add_space else '') + dates[0] + '\t' + dates[1])
+        print((str(n) + '.\t' if add_numbers else '') + holiday + '\t' * tabs[n] + (' ' if add_space else '') + dates[0] + '\t' + dates[1])
         n += 1
     return n
 
@@ -249,7 +250,7 @@ def main_menu():
         items_present = False
     while not valid_option:
         if items_present:
-            line = '\nTally totals:\nName' + '\t'*t_width + (' ' if add_space else '') + 'Hours Oweing\tHours Completed'
+            line = '\nTally totals:\nName' + '\t' * t_width + (' ' if add_space else '') + 'Hours Oweing\tHours Completed'
             line += hours_display('\t%', '|Extra Completed')
             if settings['display extra completed %']:
                 if not settings['display extra completed']:
@@ -343,7 +344,7 @@ def get_hour(day_num):
 
 def create_days_dict(s_day_options, length, returnDayList = False, days = dict()):
     if length == 1:
-        length = day_options.find(s_day_options)
+        length = day_options.find(s_day_options) #length is repurposed to index of 'day_option' index
         dayStr = str(length)
         days[dayStr] = None
         print("Course is one day, day is auto-set to " + weekDays[length])
@@ -668,13 +669,17 @@ def time_convert_str(sec):
     mins = int(mins % 60)
     return ('0' + str(hours) if hours < 10 else str(hours)) + ':' + ('0' + str(mins) if mins < 10 else str(mins)) + ':' + ('0' + str(sec) if sec < 10 else str(sec))
 
+'''Found this getwch() method in getpass.py @ https://github.com/python/cpython/blob/3.8/Lib/getpass.py'''
 def thread_timer_cancel():
     global s
     while(1):
-        u = input()
-        if u == '':
+        c = getwch()
+        if c == '\r' or c == '\n':
             s = False
+            print('\n')
             break
+        if c == '\003':
+            raise KeyboardInterrupt
 
 def timer_tally():
     global s
@@ -697,7 +702,7 @@ def timer_tally():
                     return False
                 elif c == '':
                     start_time = time.time()
-                    log_tools.tprint('Timer for ' + data['subjects'][selector][0] + ' started at ' + time.strftime('%H:%M:%S',time.localtime(start_time)))
+                    log_tools.tprint('Timer for ' + data['subjects'][selector][0] + ' started')
                     if use_live_update_timer:
                         x.start()
                         print('Press Enter to stop timer')
@@ -883,40 +888,41 @@ def settings_menu():
                     print("Invalid input.")
         else:
             print("Invalid input.")
-                         
-while menu_mode != 'X':
-    if menu_mode == 'm':
-        menu_mode = main_menu()
-    elif menu_mode == 'T':
-        if add_to_tally():
+
+if __name__ == "__main__":
+    while menu_mode != 'X':
+        if menu_mode == 'm':
+            menu_mode = main_menu()
+        elif menu_mode == 'T':
+            if add_to_tally():
+                save_json(data, data_json_path, "Data")
+            menu_mode = 'm'
+        elif menu_mode == 'I':
+            if timer_tally():
+                save_json(data, data_json_path, "Data")
+            menu_mode = 'm'
+        elif menu_mode == 'A':
+            if 'subjects' not in data:
+                data['subjects'] = list()
+            data['subjects'].append(add_menu() + [[0,0],[0,0]])
             save_json(data, data_json_path, "Data")
-        menu_mode = 'm'
-    elif menu_mode == 'I':
-        if timer_tally():
-            save_json(data, data_json_path, "Data")
-        menu_mode = 'm'
-    elif menu_mode == 'A':
-        if 'subjects' not in data:
-            data['subjects'] = list()
-        data['subjects'].append(add_menu() + [[0,0],[0,0]])
-        save_json(data, data_json_path, "Data")
-        menu_mode = 'm'
-    elif menu_mode == 'R':
-        if remove_menu():
-            save_json(data, data_json_path, "Data")
-        menu_mode = 'm'
-    elif menu_mode == 'E':
-        if edit_menu():
-            save_json(data, data_json_path, "Data")
-        menu_mode = 'm'
-    elif menu_mode == 'H':
-        if 'holidays' not in data:
-            data['holidays'] = dict()
-        if holiday_menu():
-            save_json(data, data_json_path, "Data")
-        menu_mode = 'm'
-    elif menu_mode == 'S':
-        if settings_menu():
-            save_json(settings, settings_json_path, "Settings")
-        menu_mode =  'm'
-print("\nBye.")
+            menu_mode = 'm'
+        elif menu_mode == 'R':
+            if remove_menu():
+                save_json(data, data_json_path, "Data")
+            menu_mode = 'm'
+        elif menu_mode == 'E':
+            if edit_menu():
+                save_json(data, data_json_path, "Data")
+            menu_mode = 'm'
+        elif menu_mode == 'H':
+            if 'holidays' not in data:
+                data['holidays'] = dict()
+            if holiday_menu():
+                save_json(data, data_json_path, "Data")
+            menu_mode = 'm'
+        elif menu_mode == 'S':
+            if settings_menu():
+                save_json(settings, settings_json_path, "Settings")
+            menu_mode =  'm'
+    print("\nBye.")
