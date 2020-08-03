@@ -12,6 +12,7 @@ Track your study hours.
 Install Python 3.7+<br />
         
     Copy to a folder the following files:
+    https://github.com/python/cpython/blob/3.8/Lib/getpass.py
     study_time_tally.py log_tools.py code_tools.py
     
 ### Run script:
