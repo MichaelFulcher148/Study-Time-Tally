@@ -1,11 +1,11 @@
-'''How I got this to work properly as an inport-
+'''How I got this to work properly as an import-
 Source: https://stackoverflow.com/questions/15959534/visibility-of-global-variables-in-imported-modules'''
 from time import strftime, localtime
 from code_tools import countup, countdown
-##from sys import maxunicode
+## from sys import maxunicode
 global run_date, script_id, html_output_file, log_file_name
 
-def initialize(enable_html = True):
+def initialize(enable_html=True):
     if enable_html:
         global html_output_file
         html_output_file = list()
@@ -21,9 +21,9 @@ def initialize(enable_html = True):
 ##non_bmp_map = dict.fromkeys(range(0x10000, maxunicode + 1), 0xfffd)
 
 '''Print a string with a timestamp'''
-def tprint(*args, html = False, **kwargs):
+def tprint(*args, html=False, **kwargs):
     if len(kwargs) == 0:
-        kwargs = {'sep' : '', 'end' : '\n'}
+        kwargs = {'sep': '', 'end': '\n'}
     else:
         if 'sep' not in kwargs:
             kwargs['sep'] = ''
@@ -33,25 +33,25 @@ def tprint(*args, html = False, **kwargs):
     for x in args:
         output += x
     add_to_txt_log(output + kwargs['end'])
-    if html == True:
+    if html:
         add_to_html_log(output + kwargs['end'])
-    print(output, sep = kwargs['sep'], end = kwargs['end'])
+    print(output, sep=kwargs['sep'], end=kwargs['end'])
 
-def add_to_txt_log(string, add_date = False):
+def add_to_txt_log(string, add_date=False):
     if string[-1] != '\n':
         string += '\n'
-    if script_id == '':
-        f_txt_log = open('logs\log_' + run_date + '.txt', 'a', encoding="utf-8")
+    if not script_id or script_id == '':
+        f_txt_log = open('logs\\log_' + run_date + '.txt', 'a', encoding="utf-8")
 ##        f_txt_log = open('logs\log_' + run_date + '.txt', 'ta', encoding="ascii", errors="surrogateescape")
     else:
         f_txt_log = open('logs\\' + script_id + '_log_' + run_date + '.txt', 'a', encoding="utf-8")
 ##        f_txt_log = open('logs\\' + script_id + '_log_' + run_date + '.txt', 'ta', encoding="ascii", errors="surrogateescape")
-    if add_date == True:
+    if add_date:
         string = strftime('%d-%m-%Y %H:%M:%S', localtime()) + " - " + string
     try:
         f_txt_log.write(string)
 ##        f_txt_log.write(string.translate(non_bmp_map))
-    except (UnicodeEncodeError):
+    except UnicodeEncodeError:
         print("Error with line writing line:\n" + string)
 ##        f_txt_log.write(string.translate(non_bmp_map) + '::except(UnicodeEncodeError) handled\n')
 ##        ##f_txt_log.write(str(string.encode('utf-8')) + '::except(UnicodeEncodeError) handled\n')
