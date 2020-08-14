@@ -41,13 +41,13 @@ def add_to_txt_log(string, add_date=False):
     if string[-1] != '\n':
         string += '\n'
     if not script_id or script_id == '':
-        f_txt_log = open('logs\\log_' + run_date + '.txt', 'a', encoding="utf-8")
+        f_txt_log = open('logs\\log_{}.txt'.format(run_date), 'a', encoding="utf-8")
 ##        f_txt_log = open('logs\log_' + run_date + '.txt', 'ta', encoding="ascii", errors="surrogateescape")
     else:
-        f_txt_log = open('logs\\' + script_id + '_log_' + run_date + '.txt', 'a', encoding="utf-8")
+        f_txt_log = open('logs\\{}_log_{}.txt'.format(script_id, run_date), 'a', encoding="utf-8")
 ##        f_txt_log = open('logs\\' + script_id + '_log_' + run_date + '.txt', 'ta', encoding="ascii", errors="surrogateescape")
     if add_date:
-        string = strftime('%d-%m-%Y %H:%M:%S', localtime()) + " - " + string
+        string = "{} - {}".format(strftime('%d-%m-%Y %H:%M:%S', localtime()), string)
     try:
         f_txt_log.write(string)
 ##        f_txt_log.write(string.translate(non_bmp_map))

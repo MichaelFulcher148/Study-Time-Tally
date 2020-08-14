@@ -55,6 +55,6 @@ def folder_name_char_check(a_string):
     non_valid_chars = '\\/?%*:|"<>.'
     for i in a_string:
         if i in non_valid_chars:
-            print(a_string + " Contains non valid character(s).\nFile and Folder names must not contain any of these characters " + non_valid_chars + '.')
+            print("{} Contains non valid character(s).\nFile and Folder names must not contain any of these characters {}.".format(a_string, non_valid_chars))
             return False
     return True

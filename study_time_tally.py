@@ -58,22 +58,22 @@ def get_date():
 
 def validate_start_date(end_date, old):
     while 1:
-        print("\nStart Date, format - dd/mm/yyyy. Current Date (" + old + ")")
+        print("\nStart Date, format - dd/mm/yyyy. Current Date ({})".format(old))
         start_date = get_date()
         if datetime.strptime(end_date, '%d/%m/%Y').date() > datetime.strptime(start_date, '%d/%m/%Y').date():
-            print("Start date must be before the end date (" + end_date + ").")
+            print("Start date must be before the end date ({}).".format(end_date))
         else:
             return start_date
 
 def validate_end_date(start_date, old=None):
     while 1:
         if old:
-            print("\nEnd Date, format - dd/mm/yyyy. Current Date (" + old + ")")
+            print("\nEnd Date, format - dd/mm/yyyy. Current Date ({})".format(old))
         else:
             print("\nEnd Date, format - dd/mm/yyyy.")
         end_date = get_date()
         if datetime.strptime(end_date, '%d/%m/%Y').date() < datetime.strptime(start_date, '%d/%m/%Y').date():
-            print("End date must be after the start date (" + start_date + ").")
+            print("End date must be after the start date ({}).".format(start_date))
         else:
             return end_date
 
@@ -182,10 +182,10 @@ def tabs_list(a_list):  # generate data for correct spacing in data display colu
 
 def display_holiday_list(add_numbers=False):
     t_width, add_space, tabs = tabs_list([*data['holidays'].keys()])
-    print('\nSaved Holidays:\n' + ('\t' if add_numbers else '') + 'Name' + '\t'*t_width + (' ' if add_space else '') + 'Start Date\tEnd Date')
+    print('\nSaved Holidays:\n{a}Name{b}{c}Start Date\tEnd Date'.format(a='\t' if add_numbers else '', b='\t'*t_width, c=' ' if add_space else ''))
     n = 0
     for holiday, dates in data['holidays'].items():
-        print((str(n) + '.\t' if add_numbers else '') + holiday + '\t' * tabs[n] + (' ' if add_space else '') + dates[0] + '\t' + dates[1])
+        print('{a}{h}{b}{c}{d0}\t{d1}'.format(a=str(n) + '.\t' if add_numbers else '', h=holiday, b='\t' * tabs[n], c=' ' if add_space else '', d0=dates[0], d1=dates[1]))
         n += 1
     return n
 
@@ -214,8 +214,7 @@ def main_menu():
         items_present = False
     while not valid_option:
         if items_present:
-            line = '\nTally totals:\nName' + '\t' * t_width + (' ' if add_space else '') + 'Hours Owing\tHours Completed'
-            line += hours_display('\t%', '|Extra Completed')
+            line = '\nTally totals:\nName{a}{b}Hours Owing\tHours Completed{c}'.format(a='\t' * t_width, b=' ' if add_space else '', c=hours_display('\t%', '|Extra Completed'))
             if settings['display extra completed %']:
                 if not settings['display extra completed']:
                     line += '\t|'
@@ -224,8 +223,8 @@ def main_menu():
             n = 0
             for subject in data["subjects"]:
                 hours = tally_hours(subject[2], subject[3], subject[1])
-                line = subject[0] + '\t'*tabs[n] + (' ' if add_space else '') + str(hours) + '\t\t' + str(subject[4][0]) + 'h ' + str(subject[4][1]) + 'm\t'
-                line += hours_display('\t{:.1%}'.format((subject[4][0] * 60 + subject[4][1]) / (hours * 60)), '|' + str(subject[5][0]) + 'h ' + str(subject[5][1]) + 'm\t')
+                line = '{a}{b}{c}{d}\t\t{h}h {m}m\t'.format(a=subject[0], b='\t'*tabs[n], c=' ' if add_space else '', d=str(hours), h=str(subject[4][0]), m=str(subject[4][1]))
+                line += hours_display('\t{:.1%}'.format((subject[4][0] * 60 + subject[4][1]) / (hours * 60)), '|{}h {}m\t'.format(str(subject[5][0]), str(subject[5][1])))
                 if settings['display extra completed %']:
                     if not settings['display extra completed']:
                         line += '\t|'
@@ -236,7 +235,7 @@ def main_menu():
                 n += 1
         else:
             print("Subject list is empty.")
-        print('\n--MAIN MENU--\n\tAdd to (T)ally\n\tUse t(I)mer to Add to Tally\n\t(A)dd Subject\n\t(R)emove Subject\n\t(E)dit Subject\n\t(H)olidays Menu\n\t(S)ettings Menu\n\te(X)it')
+        print('\n\t--MAIN MENU--\n\tAdd to (T)ally\n\tUse t(I)mer to Add to Tally\n\t(A)dd Subject\n\t(R)emove Subject\n\t(E)dit Subject\n\t(H)olidays Menu\n\t(S)ettings Menu\n\te(X)it')
         menu_option = input("Choose Option:").upper()
         valid_option = menu_char_check(menu_option, 'TIXAREHS')
     return menu_option
@@ -295,14 +294,14 @@ def check_digit(num_str, allow_enter_be_zero):
 def get_time_digit(time_div_str):
     valid_num = False
     while not valid_num:
-        selector = input('Number of ' + time_div_str + '(s) to add:')
+        selector = input('Number of {}(s) to add:'.format(time_div_str))
         valid_num, digit = check_digit(selector, True)
     return digit
 
 def get_hour(day_num):
     valid_num = False
     while not valid_num:
-        selector = input("Number of hours for " + weekdays[day_num] + ":")
+        selector = input("Number of hours for {}:".format(weekdays[day_num]))
         valid_num, digit = check_digit(selector, False)
     return digit
 
@@ -321,7 +320,7 @@ def create_days_dict(s_day_options, length, return_day_list=False, days=dict()):
             output = str()
             for day in s_day_options:
                 output += menu_weekdays[day_options.find(day)] + ", "
-            print('\n--SELECT DAYS--\n' + output[:-2] + '\nEnter X when finished.')
+            print('\n--SELECT DAYS--\n{}\nEnter X when finished.'.format(output[:-2]))
             selector = input('Option:').upper()
             if menu_char_check(selector, s_day_options + 'X'):
                 if selector == "X":
@@ -345,20 +344,20 @@ def create_days_dict(s_day_options, length, return_day_list=False, days=dict()):
 
 def get_name(type_text, name_list):
     while 1:
-        name = input("Name of " + type_text + ":")
+        name = input("Name of {}:".format(type_text))
         if len(name) > 0:
             if name not in name_list:
                 return name
             else:
-                print("Name " + name + " already exists.")
+                print("Name {} already exists.".format(name))
         else:
             print("Name must be at least 1 character.")
 
 def add_menu():
     name_list = [x[0] for x in data['subjects']]
-    print('\n--ADD SUBJECT--')
+    print('\n\t--ADD SUBJECT--')
     name = get_name('Subject', name_list)
-    print("\nStart Date, format - dd/mm/yyyy.")
+    print("\n\tStart Date, format - dd/mm/yyyy.")
     start_date = get_date()
     end_date = validate_end_date(start_date)
     days = create_days_dict(*setup_day_options(start_date, end_date))
@@ -368,7 +367,7 @@ def add_menu():
 def display_subject_list():
     t = 0
     for subject in data["subjects"]:
-        print(str(t) + " - " + subject[0])
+        print("\t{} - {}".format(str(t), subject[0]))
         t += 1
     return t
 
@@ -424,7 +423,7 @@ def change_date(subject, date2change, date_word_str, length, new_start_date_obj,
                 while 1:
                     day_of_week = new_start_date_obj.weekday()
                     day_of_week_str = str(day_of_week)
-                    selector = input("\nDetected that your new day range is one day, day will be auto-set to " + weekdays[day_of_week] + ("." if len(log_output) == 0 else " and " + log_out_msg) + question_str).upper()
+                    selector = input("\nDetected that your new day range is one day, day will be auto-set to {}{s}{a}".format(weekdays[day_of_week], s="." if len(log_output) == 0 else " and " + log_out_msg, a=question_str)).upper()
                     if selector == "N":
                         break
                     elif selector == "Y":
@@ -432,35 +431,35 @@ def change_date(subject, date2change, date_word_str, length, new_start_date_obj,
                         data['subjects'][subject][date2change] = new_date
                         if day_of_week_str in data['subjects'][subject][1].keys():
                             remove_days_from_dict(subject, day_list)
-                            log_tools.tprint("Changed " + data['subjects'][subject][0] + " " + date_word_str + " date from " + old + " to " + data['subjects'][subject][date2change] + " and removed " + log_output[:-2] + ". (Not Saved)")
+                            log_tools.tprint("Changed {} {} date from {} to {} and removed {}. (Not Saved)".format(data['subjects'][subject][0], date_word_str, old, data['subjects'][subject][date2change], log_output[:-2]))
                         else:
                             remove_days_from_dict(subject, day_list)
                             data['subjects'][subject][1][day_of_week_str] = get_hour(int(day_of_week))
-                            log_tools.tprint("Changed " + data['subjects'][subject][0] + " " + date_word_str + " date from " + old + " to " + data['subjects'][subject][date2change] + ", added " + weekdays[day_of_week] + " and removed " + log_output[:-2] + ". (Not Saved)")
+                            log_tools.tprint("Changed {} {} date from {} to {}, added {} and removed {}. (Not Saved)".format(data['subjects'][subject][0], date_word_str, old, data['subjects'][subject][date2change], weekdays[day_of_week], log_output[:-2]))
                         break
                     else:
                         print("Invalid input.")
             else:
                 while 1:
-                    selector = input("\nDetected that your new day range is less than the old day range.\n" + log_out_msg + question_str).upper()
+                    selector = input("\nDetected that your new day range is less than the old day range.\n{}{}".format(log_out_msg, question_str)).upper()
                     if selector == "N":
                         break
                     elif selector == "Y":
                         remove_days_from_dict(subject, day_list)
                         old = data['subjects'][subject][date2change]
                         data['subjects'][subject][date2change] = new_date
-                        log_tools.tprint("Changed " + data['subjects'][subject][0] + " " + date_word_str + " date from " + old + " to " + data['subjects'][subject][date2change] + " and removed " + log_output[:-2] + ". (Not Saved)")
+                        log_tools.tprint("Changed {} {} date from {} to {} and removed {}. (Not Saved)".format(data['subjects'][subject][0], date_word_str, old, data['subjects'][subject][date2change], log_output[:-2]))
                         break
                     else:
                         print("Invalid input.")
     else:
         old = data['subjects'][subject][date2change]
         data['subjects'][subject][date2change] = new_date
-        log_tools.tprint("Changed " + data['subjects'][subject][0] + " " + date_word_str + " date from " + old + " to " + data['subjects'][subject][date2change] + ". (Not Saved)")
+        log_tools.tprint("Changed {} {} date from {} to {}. (Not Saved)".format(data['subjects'][subject][0], date_word_str, old, data['subjects'][subject][date2change]))
 
 def edit_time_tally(subject_choice, time_category):
     selector = None
-    print("\n--Edit " + ("Normal" if time_category == 4 else "Extra") + " Tally of " + data['subjects'][subject_choice][0] + "--\nCurrent Tally: " + str(data['subjects'][subject_choice][time_category][0]) + "h " + str(data['subjects'][subject_choice][time_category][1]) + "m\nChanges are done by subtracting, not by directed edit.")
+    print("\n--Edit {a} Tally of {b}--\nCurrent Tally: {c}h {d}m\nChanges are done by subtracting, not by directed edit.".format(a="Normal" if time_category == 4 else "Extra", b=data['subjects'][subject_choice][0], c=str(data['subjects'][subject_choice][time_category][0]), d=str(data['subjects'][subject_choice][time_category][1])))
     while selector != 'X':
         selector = input("--Field to edit:\n1. Hour\n2. Minute\ne(X)it without saving\n:").upper()
         if selector == '1':
@@ -471,11 +470,11 @@ def edit_time_tally(subject_choice, time_category):
                 elif selector.isdigit():
                     n = int(selector)
                     if data['subjects'][subject_choice][time_category][0] < n:
-                        print("Amount to subtract cannot be larger than current hours (" + str(data['subjects'][subject_choice][time_category][0]) + "h)")
+                        print("Amount to subtract cannot be larger than current hours ({}h)".format(str(data['subjects'][subject_choice][time_category][0])))
                     else:
                         old = data['subjects'][subject_choice][time_category][0]
                         data['subjects'][subject_choice][time_category][0] -= n
-                        log_tools.tprint("Decreased " + data['subjects'][subject_choice][0] + " - hour by " + selector + " from " + str(old) + "h to " + str(data['subjects'][subject_choice][time_category][0]) + "h. (Not Saved).")
+                        log_tools.tprint("Decreased {} - hour by {} from {}h to {}h. (Not Saved).".format(data['subjects'][subject_choice][0], selector, str(old), str(data['subjects'][subject_choice][time_category][0])))
                         selector = 'X'
                         break
                 else:
@@ -489,7 +488,7 @@ def edit_time_tally(subject_choice, time_category):
                     n = int(selector)
                     old = data['subjects'][subject_choice][time_category][0] * 60 + data['subjects'][subject_choice][time_category][1]
                     if n > old:
-                        print("Amount to subtract cannot be larger then current hours + minutes (" + str(data['subjects'][subject_choice][time_category][0]) + "h " + str(data['subjects'][subject_choice][time_category][1]) + "m)")
+                        print("Amount to subtract cannot be larger then current hours + minutes ({}h {}m)".format(str(data['subjects'][subject_choice][time_category][0]), str(data['subjects'][subject_choice][time_category][1])))
                     else:
                         old = data['subjects'][subject_choice][time_category][0]
                         old_minute = data['subjects'][subject_choice][time_category][1]
@@ -497,7 +496,7 @@ def edit_time_tally(subject_choice, time_category):
                         while data['subjects'][subject_choice][time_category][1] < 0:
                             data['subjects'][subject_choice][time_category][1] += 60
                             data['subjects'][subject_choice][time_category][0] -= 1
-                        log_tools.tprint("Decreased " + data['subjects'][subject_choice][0] + " - " + ("Normal" if time_category == 4 else "Extra") + " time by " + selector + " from " + str(old) + "h " + str(old_minute) + "m to " + str(data['subjects'][subject_choice][time_category][0]) + "h " + str(data['subjects'][subject_choice][time_category][1]) + "m. (Not Saved).")
+                        log_tools.tprint("Decreased {} - {a} time by {b} from {oh}h {om}m to {h}h {m}m. (Not Saved).".format(data['subjects'][subject_choice][0], a="Normal" if time_category == 4 else "Extra", b=selector, oh=str(old), om=str(old_minute), h=str(data['subjects'][subject_choice][time_category][0]), m=str(data['subjects'][subject_choice][time_category][1])))
                         selector = 'X'
                         break
                 else:
@@ -526,10 +525,10 @@ def edit_menu():
                     else:
                         one_day_course = False
                         n = 7
-                    print("\n--Edit Subject " + data['subjects'][subject_choice][0] + "--\ne(X)it to previous menu\n(S)ave changes\n1. Name\n2. Start Date\t\t" + data['subjects'][subject_choice][2] + "\n3. End Date\t\t" + data['subjects'][subject_choice][3] + ("\n4. Add Day\n5. Remove Day" if one_day_course is False else "") + "\n6. Remove from Normal Tally\t" + str(data['subjects'][subject_choice][4][0]) + "h " + str(data['subjects'][subject_choice][4][1]) + "m" + "\n7. Remove from Extra Tally\t" + str(data['subjects'][subject_choice][5][0]) + "h " + str(data['subjects'][subject_choice][5][1]) + "m" + "\n::Edit a Day")
+                    print("\n--Edit Subject {}--\ne(X)it to previous menu\n(S)ave changes\n1. Name\n2. Start Date\t\t{}\n3. End Date\t\t{}{d}\n6. Remove from Normal Tally\t{nh}h {nm}m\n7. Remove from Extra Tally\t{eh}h {em}m\n::Edit a Day".format(data['subjects'][subject_choice][0], data['subjects'][subject_choice][2], data['subjects'][subject_choice][3], d="\n4. Add Day\n5. Remove Day" if one_day_course is False else "", nh=str(data['subjects'][subject_choice][4][0]), nm=str(data['subjects'][subject_choice][4][1]), eh=str(data['subjects'][subject_choice][5][0]), em=str(data['subjects'][subject_choice][5][1])))
                     for day, hour in data['subjects'][subject_choice][1].items():
                         n += 1
-                        print(str(n) + ". " + weekdays[int(day)] + "\t\tHours: " + str(hour))
+                        print("{}. {}\t\tHours: " + str(hour).format(str(n), weekdays[int(day)]))
                     selector = input("Field to edit:").upper()
                     if selector == 'X':
                         break
@@ -543,12 +542,12 @@ def edit_menu():
                                 day = [*data['subjects'][subject_choice][1].keys()][field - 6 if one_day_course else field - 8]
                                 while 1:
                                     day_name = weekdays[int(day)]
-                                    print("\n--Edit " + data['subjects'][subject_choice][0] + " " + day_name + "--\n--X to exit.")
+                                    print("\n--Edit {} {}--\n--X to exit.".format(data['subjects'][subject_choice][0], day_name))
                                     num = input("Number of hours:").upper()
                                     if num.isdecimal():
                                         old = data['subjects'][subject_choice][1][day]
                                         data['subjects'][subject_choice][1][day] = int(num)
-                                        log_tools.tprint("Changed " + data['subjects'][subject_choice][0] + " " + day_name + " time from " + str(old) + " to " + str(data['subjects'][subject_choice][1][day]) + ". (Not Saved)")
+                                        log_tools.tprint("Changed {} {} time from {} to {}. (Not Saved)".format(data['subjects'][subject_choice][0], day_name, str(old), str(data['subjects'][subject_choice][1][day])))
                                         break
                                     elif num == "X":
                                         break
@@ -560,19 +559,19 @@ def edit_menu():
                                     if len(name) > 0:
                                         old = data['subjects'][subject_choice][0]
                                         data['subjects'][subject_choice][0] = name
-                                        log_tools.tprint("Renamed " + old + " to " + data['subjects'][subject_choice][0])
+                                        log_tools.tprint("Renamed {} to {}".format(old, data['subjects'][subject_choice][0]))
                                     else:
                                         print("Name must be at least 1 character.")
                                         break
                                 elif field == 2:  # Change start date
                                     # old = data['subjects'][subject_choice][2]
                                     while 1:
-                                        print("\nStart Date, format - dd/mm/yyyy. Current Date (" + data['subjects'][subject_choice][2] + ")")
+                                        print("\nStart Date, format - dd/mm/yyyy. Current Date ({})".format(data['subjects'][subject_choice][2]))
                                         new_date = get_date()
                                         new_date_obj = datetime.strptime(new_date, '%d/%m/%Y').date()
                                         end_date_obj = datetime.strptime(data['subjects'][subject_choice][3], '%d/%m/%Y').date()
                                         if end_date_obj < new_date_obj:
-                                            print("Start date must be before the end date (" + data['subjects'][subject_choice][3] + ").")
+                                            print("Start date must be before the end date ({}).".format(data['subjects'][subject_choice][3]))
                                         else:
                                             break
                                     change_date(subject_choice, 2, "start", (end_date_obj - new_date_obj).days + 1, new_date_obj, end_date_obj, new_date)
@@ -590,23 +589,23 @@ def edit_menu():
                                     data['subjects'][subject_choice][1], day_list = create_days_dict(s_day_options, length, True, data['subjects'][subject_choice][1])
                                     log_output = str()
                                     for day in day_list:
-                                        log_output += weekdays[int(day)] + " " + str(data['subjects'][subject_choice][1][day]) + " hour" + ("" if data['subjects'][subject_choice][1][day] == 1 else "s") + ", "
-                                    log_tools.tprint("Added to " + data['subjects'][subject_choice][0] + " - " + log_output[:-2] + ". (Not Saved)")
+                                        log_output += "{} {} hour{s}, ".format(weekdays[int(day)], str(data['subjects'][subject_choice][1][day]), s="" if data['subjects'][subject_choice][1][day] == 1 else "s")
+                                    log_tools.tprint("Added to {} - {}. (Not Saved)".format(data['subjects'][subject_choice][0], log_output[:-2]))
                                 elif field == 5:  # Remove a day
-                                    print("\n--Remove a day from " + data['subjects'][subject_choice][0] + '--')
+                                    print("\n--Remove a day from {}--".format(data['subjects'][subject_choice][0]))
                                     days = [*data['subjects'][subject_choice][1].keys()]
                                     while 1:
                                         n = 0
                                         for day, hour in data['subjects'][subject_choice][1].items():
                                             n += 1
-                                            print(str(n) + ". " + weekdays[int(day)] + "\t Hour" + ("" if hour == 1 else "s") + ": " + str(hour))
+                                            print("{}. {}\t Hour{a}: {b}".format(str(n), weekdays[int(day)], a="" if hour == 1 else "s", b=str(hour)))
                                         selector = input("Field to edit:").upper()
                                         if selector == 'X':
                                             break
                                         elif validate_selector(selector, n + 1):
                                             n = int(selector) - 1
                                             data['subjects'][subject_choice][1].pop(days[n])
-                                            log_tools.tprint("Removed " + weekdays[int(days[n])] + " from " + data['subjects'][subject_choice][0] + ". (Not Saved)")
+                                            log_tools.tprint("Removed {} from {}. (Not Saved)".format(weekdays[int(days[n])], data['subjects'][subject_choice][0]))
                                             break
                                 elif field == 6:  # Edit Normal Tally
                                     edit_time_tally(subject_choice, 4)
@@ -624,14 +623,14 @@ def add_hour_minute(subject, time_category, hour, minute):
     while data['subjects'][subject][time_category][1] > 59:
         data['subjects'][subject][time_category][1] -= 60
         data['subjects'][subject][time_category][0] += 1
-    log_tools.tprint("Increased " + data['subjects'][subject][0] + (" Normal" if time_category == 4 else " Extra") + " Hours from " + str(old_hour) + 'h ' + str(old_minute) + "m to " + str(data['subjects'][subject][time_category][0]) + 'h ' + str(data['subjects'][subject][time_category][1]) + 'm.')
+    log_tools.tprint("Increased {}{a} Hours from {b}h {c}m to {d}h {e}m.".format(data['subjects'][subject][0], a=" Normal" if time_category == 4 else " Extra", b=str(old_hour), c=str(old_minute), d=str(data['subjects'][subject][time_category][0]), e=str(data['subjects'][subject][time_category][1])))
 
 def time_convert_str(sec):
     mins = sec // 60
     sec = int(sec % 60)
     hours = int(mins // 60)
     mins = int(mins % 60)
-    return ('0' + str(hours) if hours < 10 else str(hours)) + ':' + ('0' + str(mins) if mins < 10 else str(mins)) + ':' + ('0' + str(sec) if sec < 10 else str(sec))
+    return '{a}:{b}:{c}'.format(a='0' + str(hours) if hours < 10 else str(hours), b='0' + str(mins) if mins < 10 else str(mins), c='0' + str(sec) if sec < 10 else str(sec))
 
 '''Found this getwch() method in getpass.py @ https://github.com/python/cpython/blob/3.8/Lib/getpass.py'''
 def thread_timer_cancel():
@@ -651,7 +650,7 @@ def timer_tally():
         if use_live_update_timer:
             x = threading.Thread(target=thread_timer_cancel)
         while 1:
-            print("\n--TIMER MENU--")
+            print("\n\t--TIMER MENU--")
             n = display_subject_list()
             selector = input("Subject to add tally to:").upper()
             if selector == "X":
@@ -666,7 +665,7 @@ def timer_tally():
                     return False
                 elif c == '':
                     start_time = time.time()
-                    log_tools.tprint('Timer for ' + data['subjects'][selector][0] + ' started')
+                    log_tools.tprint('Timer for {} started'.format(data['subjects'][selector][0]))
                     if use_live_update_timer:
                         x.start()
                         print('Press Enter to stop timer')
@@ -686,13 +685,13 @@ def timer_tally():
                     current_time = current_time - start_time  # current_time repurposed to length of time span
                     current_time = int(current_time // 60)  # current_time repurposed to minutes
                     hours = current_time // 60
-                    print('Timer stopped at ' + (('{0}minute'.format(current_time) + ('' if current_time == 1 else 's')) if hours == 0 else '{0}hour'.format(hours) + (' ' if hours == 1 else 's ') + '{0}minute'.format(current_time) + ('' if current_time == 1 else 's')) + '\n')
+                    print('Timer stopped at {}\n'.format('{0}minute{s}'.format(current_time, s='' if current_time == 1 else 's') if hours == 0 else '{0}hour{s}{m}'.format(hours, s=' ' if hours == 1 else 's ', m='{0}minute{s}'.format(current_time, s='' if current_time == 1 else 's'))))
                     s = True
                     if current_time != 0 or hours != 0:
                         add_hour_minute(selector, time_category, hours, current_time)
                         return True
                     else:
-                        log_tools.tprint('Time span for ' + data['subjects'][selector][0] + ' was less than 1 minute, nothing saved.')
+                        log_tools.tprint('Time span for {} was less than 1 minute, nothing saved.'.format(data['subjects'][selector][0]))
                         return False
                 else:
                     print('Invalid command, returning to main menu.')
@@ -703,7 +702,7 @@ def timer_tally():
 def add_to_tally():
     if "subjects" in data and len(data['subjects']) > 0:
         while 1:
-            print("\n--TALLY MENU--")
+            print("\n\t--TALLY MENU--")
             n = display_subject_list()
             selector = input("Subject to add tally to:").upper()
             if selector == "X":
@@ -731,12 +730,12 @@ def holiday_menu():
             holiday_names = [*data['holidays'].keys()]
             display_holiday_list()
             num_options = True
-            print("\n--HOLIDAY MENU--\nExit and (S)ave Changes\ne(X)it without saving\n\t1. Add Holiday\n\t2. Remove Holiday\n\t3. Edit Holiday")
+            print("\n\t--HOLIDAY MENU--\n\tExit and (S)ave Changes\n\te(X)it without saving\n\t1. Add Holiday\n\t2. Remove Holiday\n\t3. Edit Holiday")
         else:
             print('\nNo holidays saved.')  # make menu change when holiday list empty...
             holiday_names = list()
             num_options = False
-            print('\n--HOLIDAY MENU--\nExit and (S)ave Changes\ne(X)it without saving\n\t1. Add Holiday\n')
+            print('\n\t--HOLIDAY MENU--\n\tExit and (S)ave Changes\n\te(X)it without saving\n\t1. Add Holiday\n')
         selector = input(("Option:" if num_options else "Field to edit:")).upper()
         if menu_char_check(selector, 'SX' + ('1' if num_options is False else '123')):
             if selector == '1':
@@ -746,10 +745,10 @@ def holiday_menu():
                 end_date = validate_end_date(start_date)
                 holiday_names.append(name)
                 data['holidays'][name] = [start_date, end_date]
-                log_tools.tprint('Added ' + name + ' to Saved Holidays. (Not Saved).')
+                log_tools.tprint('Added {} to Saved Holidays. (Not Saved).'.format(name))
             elif selector == '2':
                 while 1:
-                    print('\n--REMOVE HOLIDAY MENU--\ne(X)it\n')
+                    print('\n\t--REMOVE HOLIDAY MENU--\n\te(X)it\n')
                     n = display_holiday_list(True)
                     field = input('Holiday to remove:').upper()
                     if selector == "X":
@@ -759,11 +758,11 @@ def holiday_menu():
                         old_name = holiday_names[num]
                         data['holidays'].pop(holiday_names[num])
                         holiday_names.pop(num)
-                        log_tools.tprint('Removed ' + old_name + " from Saved Holidays. (Not Saved)")
+                        log_tools.tprint("Removed {} from Saved Holidays. (Not Saved)".format(old_name))
                         break
             elif selector == '3':
                 while 1:
-                    print('\n--EDIT HOLIDAY MENU--\ne(X)it\n')
+                    print('\n\t--EDIT HOLIDAY MENU--\n\te(X)it\n')
                     n = display_holiday_list(True)
                     field = input('Holiday to edit:').upper()
                     if field == 'X':
@@ -771,7 +770,7 @@ def holiday_menu():
                     elif validate_selector(field, n):
                         num = int(field)
                         while 1:
-                            print('\n--EDIT HOLIDAY ' + holiday_names[num] + '--\ne(X)it to previous menu\n(S)ave changes\n\t1. Name\n\t2. Start Date\t' + data['holidays'][holiday_names[num]][0] + '\n\t3. End Date\t' + data['holidays'][holiday_names[num]][1])
+                            print('\n\t--EDIT HOLIDAY {}--\n\te(X)it to previous menu\n\t(S)ave changes\n\t1. Name\n\t2. Start Date\t{}\n\t3. End Date\t{}'.format(holiday_names[num], data['holidays'][holiday_names[num]][0], data['holidays'][holiday_names[num]][1]))
                             field = input('Field to edit:').upper()
                             if field == '1':
                                 selector = get_name('holiday', holiday_names)
@@ -779,17 +778,17 @@ def holiday_menu():
                                 data['holidays'][selector] = data['holidays'].pop(old)
                                 holiday_names.pop(num)
                                 holiday_names.append(selector)
-                                log_tools.tprint("Renamed holiday - " + old + " to " + selector)
+                                log_tools.tprint("Renamed holiday - {} to {}".format(old, selector))
                                 break
                             elif field == '2':
                                 old = data['holidays'][holiday_names[num]][0]
                                 data['holidays'][holiday_names[num]][0] = validate_start_date(data['holidays'][holiday_names[num]][1], data['holidays'][holiday_names[num]][0])
-                                log_tools.tprint('Changed holiday - ' + holiday_names[num] + ' from ' + old + ' to ' + data['holidays'][holiday_names[num]][0])
+                                log_tools.tprint('Changed holiday - {} from {} to {}'.format(holiday_names[num], old, data['holidays'][holiday_names[num]][0]))
                                 break
                             elif field == '3':
                                 old = data['holidays'][holiday_names[num]][1]
                                 data['holidays'][holiday_names[num]][1] = validate_end_date(data['holidays'][holiday_names[num]][0], data['holidays'][holiday_names[num]][1])
-                                log_tools.tprint('Changed holiday - ' + holiday_names[num] + ' from ' + old + ' to ' + data['holidays'][holiday_names[num]][1])
+                                log_tools.tprint('Changed holiday - {} from {} to {}'.format(holiday_names[num], old, data['holidays'][holiday_names[num]][1]))
                                 break
                             elif field == 'X':
                                 break
@@ -807,17 +806,17 @@ def change_tally_usage_setting(new_hour_bol, new_minute_bol):
     old = get_description_of_tally_setting()
     settings['tallyEditMinute'] = new_minute_bol
     settings['tallyEditHour'] = new_hour_bol
-    log_tools.tprint('Changed Tally Usage - from ' + old + ' to ' + get_description_of_tally_setting() + " (Not Saved)")
+    log_tools.tprint('Changed Tally Usage - from {} to {} (Not Saved)'.format(old, get_description_of_tally_setting()))
 
 def toggle_boolean_setting(setting_key):
     settings[setting_key] = not settings[setting_key]
-    log_tools.tprint('Changed ' + setting_key + ' - from ' + str(not settings[setting_key]) + ' to ' + str(settings[setting_key]) + " (Not Saved)")
+    log_tools.tprint('Changed {} - from {} to {} (Not Saved)'.format(setting_key, str(not settings[setting_key]), str(settings[setting_key])))
 
 def settings_menu():
     while 1:
-        print("\n--CURRENT SETTINGS--\n\t--Main Menu Display--\n\t1. Display Completed Percent:\t\t" + str(settings['display completed %']) + '\n\t2. Display extra completed:\t\t' + str(settings['display extra completed']) + '\n\t3. Display extra Completed Percent:\t' + str(settings['display extra completed %']))
-        print('\n--Usage--\n\t(E)dit tallies by:\t' + get_description_of_tally_setting())
-        print("\n--SETTINGS MENU--\nExit and (S)ave Changes\ne(X)it without saving")
+        print("\n\t--CURRENT SETTINGS--\n\t-Main Menu Display-\n\t1. Display Completed Percent:\t\t{}\n\t2. Display extra completed:\t\t{}\n\t3. Display extra Completed Percent:\t{}".format(str(settings['display completed %']), str(settings['display extra completed']), str(settings['display extra completed %'])))
+        print('\n\t-Usage-\n\t(E)dit tallies by:\t' + get_description_of_tally_setting())
+        print("\n\t-SETTINGS MENU-\n\tExit and (S)ave Changes\n\te(X)it without saving")
         selector = input('Option to toggle, or command:').upper()
         if selector == 'X':
             return False
