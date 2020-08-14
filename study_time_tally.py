@@ -848,6 +848,13 @@ def settings_menu():
         else:
             print("Invalid input.")
 
+def check_for_backup(name, file_path):
+    log_tools.tprint('{} file ({}) empty or corrupt.'.format(name, path.abspath(file_path)))
+    if path.isfile(file_path[:-4] + 'old'):
+        print("Backup file (.old) is present. Rename old file to JSON.")
+    elif path.isfile(file_path[:-4] + 'old2'):
+        print("Backup file (.old2) is present, rename to JSON.")
+
 if __name__ == "__main__":
     if 'idlelib.run' in sys.modules:
         use_live_update_timer = False
@@ -874,12 +881,20 @@ if __name__ == "__main__":
         del makedirs
     if path.isfile(data_json_path):
         with open(data_json_path, 'r') as open_file:
-            data = json.load(open_file, parse_int=int)
+            try:
+                data = json.load(open_file, parse_int=int)
+            except json.decoder.JSONDecodeError:
+                check_for_backup("Data", data_json_path)
+                menu_mode = 'e'
     else:
         data = dict()
     if path.isfile(settings_json_path):
         with open(settings_json_path, 'r') as open_file:
-            settings = json.load(open_file, parse_int=int)
+            try:
+                settings = json.load(open_file, parse_int=int)
+            except json.decoder.JSONDecodeError:
+                check_for_backup("Settings", settings_json_path)
+                menu_mode = 'e'
     else:
         settings = dict()
         settings['display completed %'] = True
@@ -887,7 +902,7 @@ if __name__ == "__main__":
         settings['display extra completed %'] = False
         settings['tallyEditHour'] = True
         settings['tallyEditMinute'] = True
-    while menu_mode != 'X':
+    while menu_mode not in ['X', 'e']:
         if menu_mode == 'm':
             menu_mode = main_menu()
         elif menu_mode == 'T':
@@ -922,4 +937,7 @@ if __name__ == "__main__":
             if settings_menu():
                 save_json(settings, settings_json_path, "Settings")
             menu_mode = 'm'
-    print("\nBye.")
+    if menu_mode == 'e':
+        print("\nExited on error.")
+    else:
+        print("\nBye.")
