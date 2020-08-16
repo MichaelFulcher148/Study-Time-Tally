@@ -207,6 +207,7 @@ def hours_display(item1, item2):
 
 def main_menu():
     valid_option = False
+    ##add past work and work hours needed to meet obligation
     if "subjects" in data and len(data["subjects"]) > 0:
         items_present = True
         t_width, add_space, tabs = tabs_list([i[0] for i in data['subjects']])
@@ -685,6 +686,7 @@ def timer_tally():
                     current_time = current_time - start_time  # current_time repurposed to length of time span
                     current_time = int(current_time // 60)  # current_time repurposed to minutes
                     hours = current_time // 60
+                    current_time -= hours * 60
                     print('Timer stopped at {}\n'.format('{0}minute{s}'.format(current_time, s='' if current_time == 1 else 's') if hours == 0 else '{0}hour{s}{m}'.format(hours, s=' ' if hours == 1 else 's ', m='{0}minute{s}'.format(current_time, s='' if current_time == 1 else 's'))))
                     s = True
                     if current_time != 0 or hours != 0:
@@ -851,9 +853,14 @@ def settings_menu():
 def check_for_backup(name, file_path):
     log_tools.tprint('{} file ({}) empty or corrupt.'.format(name, path.abspath(file_path)))
     if path.isfile(file_path[:-4] + 'old'):
-        print("Backup file (.old) is present. Rename old file to JSON.")
-    elif path.isfile(file_path[:-4] + 'old2'):
-        print("Backup file (.old2) is present, rename to JSON.")
+        log_tools.tprint("Backup file (.old) is present.")
+        print("\t\tIt is likely you have suffered some data loss.\t\tConsider renaming old file to JSON.")
+    else:
+        if path.isfile(file_path[:-4] + 'old2'):
+            log_tools.tprint("Backup file (.old2) is present.")
+            print("\t\tIt is highly likely you have suffered some data loss.\t\tConsider renaming old2 file to JSON.")
+        else:
+            log_tools.tprint("No backup {} file found.".format(name))
 
 if __name__ == "__main__":
     if 'idlelib.run' in sys.modules:
