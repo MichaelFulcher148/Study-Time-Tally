@@ -5,7 +5,7 @@ from code_tools import countup, countdown
 ## from sys import maxunicode
 global run_date, script_id, html_output_file, log_file_name
 
-def initialize(enable_html=True):
+def initialize(enable_html: bool = True) -> None:
     if enable_html:
         global html_output_file
         html_output_file = list()
@@ -21,7 +21,7 @@ def initialize(enable_html=True):
 ##non_bmp_map = dict.fromkeys(range(0x10000, maxunicode + 1), 0xfffd)
 
 '''Print a string with a timestamp'''
-def tprint(*args, html=False, **kwargs):
+def tprint(*args: str, html: bool = False, **kwargs: str) -> None:
     if len(kwargs) == 0:
         kwargs = {'sep': '', 'end': '\n'}
     else:
@@ -37,7 +37,7 @@ def tprint(*args, html=False, **kwargs):
         add_to_html_log(output + kwargs['end'])
     print(output, sep=kwargs['sep'], end=kwargs['end'])
 
-def add_to_txt_log(string, add_date=False):
+def add_to_txt_log(string: str, add_date: bool = False) -> None:
     if string[-1] != '\n':
         string += '\n'
     if not script_id or script_id == '':
@@ -60,7 +60,7 @@ def add_to_txt_log(string, add_date=False):
         f_txt_log.close()
 
 '''Convert screen outputs from tprint into html for log file'''
-def add_to_html_log(string):
+def add_to_html_log(string: str) -> None:
     output = string.split('\n')
     list_length = len(output)
     superfluous = list()

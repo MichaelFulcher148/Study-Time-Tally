@@ -18,7 +18,7 @@ import log_tools
 '''[0] Name of Subject, [1] Days to iterate required hours up and Amount of hours per day in,
 [2] Start date, [3] End Date, [4] Hours done'''
 
-def save_json(f_data, json_path, label):
+def save_json(f_data: dict, json_path: str, label: str) -> None:
     json_path_old = json_path[:-4] + 'old'
     json_path_old2 = json_path_old + '2'
     if path.isfile(json_path):
@@ -31,7 +31,7 @@ def save_json(f_data, json_path, label):
         json.dump(f_data, out, ensure_ascii=False, indent=4)
     log_tools.tprint(label + ' JSON Written')
 
-def menu_char_check(a_word, options):
+def menu_char_check(a_word: str, options: str) -> bool:
     message = " is not a valid input"
     if len(a_word) == 0:
         print("Enter" + message)
@@ -42,7 +42,7 @@ def menu_char_check(a_word, options):
     return False
 
 '''Found @: https://stackoverflow.com/questions/16870663/how-do-i-validate-a-date-string-format-in-python#_=_'''
-def validate_date(date_text):
+def validate_date(date_text: str) -> bool:
     try:
         datetime.strptime(date_text, '%d/%m/%Y').date()
         return True
@@ -50,13 +50,13 @@ def validate_date(date_text):
         print(date_text + " not a valid input")
         return False
 
-def get_date():
+def get_date() -> str:
     while 1:
         date = input("Enter Date (dd/mm/yyyy):")
         if validate_date(date):
             return date
 
-def validate_start_date(end_date, old):
+def validate_start_date(end_date: str, old: str) -> str:
     while 1:
         print("\nStart Date, format - dd/mm/yyyy. Current Date ({})".format(old))
         start_date = get_date()
@@ -65,7 +65,7 @@ def validate_start_date(end_date, old):
         else:
             return start_date
 
-def validate_end_date(start_date, old=None):
+def validate_end_date(start_date: str, old: str = None) -> str:
     while 1:
         if old:
             print("\nEnd Date, format - dd/mm/yyyy. Current Date ({})".format(old))
@@ -79,7 +79,7 @@ def validate_end_date(start_date, old=None):
 
 '''found @: https://stackoverflow.com/questions/9044084/efficient-date-range-overlap-calculation-in-python
     requires passed vars to be datetime objects'''
-def overlap_check(start_of_range1, end_of_range1, start_of_range2, end_of_range2):
+def overlap_check(start_of_range1, end_of_range1, start_of_range2, end_of_range2) -> bool:
     latest_start = max(start_of_range1, start_of_range2)
     earliest_end = min(end_of_range1, end_of_range2)
     delta = (earliest_end - latest_start).days + 1
@@ -88,7 +88,7 @@ def overlap_check(start_of_range1, end_of_range1, start_of_range2, end_of_range2
     else:
         return False
 
-def tally_hours(start_date, end_date, day_dict):
+def tally_hours(start_date: str, end_date: str, day_dict: dict) -> int:
     date_start = datetime.strptime(start_date, '%d/%m/%Y').date()
     date_today = datetime.today().date()
     if date_today < date_start:
@@ -160,7 +160,7 @@ def tally_hours(start_date, end_date, day_dict):
                     weeks -= 1
     return n
 
-def tabs_list(a_list):  # generate data for correct spacing in data display columns
+def tabs_list(a_list: list):  # generate data for correct spacing in data display columns
     t_width = 0
     n = 0
     tabs = list()
@@ -180,7 +180,7 @@ def tabs_list(a_list):  # generate data for correct spacing in data display colu
         n -= 1
     return t_width, add_space, tabs
 
-def display_holiday_list(add_numbers=False):
+def display_holiday_list(add_numbers: bool = False) -> int:
     t_width, add_space, tabs = tabs_list([*data['holidays'].keys()])
     print('\nSaved Holidays:\n{a}Name{b}{c}Start Date\tEnd Date'.format(a='\t' if add_numbers else '', b='\t'*t_width, c=' ' if add_space else ''))
     n = 0
@@ -189,7 +189,7 @@ def display_holiday_list(add_numbers=False):
         n += 1
     return n
 
-def hours_display(item1, item2):
+def hours_display(item1: str, item2: str) -> str:
     output = str()
     if settings['display completed %']:
         output += item1
@@ -205,7 +205,7 @@ def hours_display(item1, item2):
         output += item2
     return output
 
-def main_menu():
+def main_menu() -> chr:
     valid_option = False
     ##add past work and work hours needed to meet obligation
     if "subjects" in data and len(data["subjects"]) > 0:
@@ -241,7 +241,7 @@ def main_menu():
         valid_option = menu_char_check(menu_option, 'TIXAREHS')
     return menu_option
 
-def print_selected_days(day_list):
+def print_selected_days(day_list: list) -> None:
     if len(day_list) > 0:
         print("\nSelected Days:")
         for i in day_list:
@@ -249,7 +249,7 @@ def print_selected_days(day_list):
     else:
         print("No days Selected")
 
-def setup_day_options(start_date, end_date, need_length=True):
+def setup_day_options(start_date, end_date, need_length: bool = True):
     if type(start_date) == str:
         start_date_obj = datetime.strptime(start_date, '%d/%m/%Y').date()
         end_date_obj = datetime.strptime(end_date, '%d/%m/%Y').date()
@@ -279,7 +279,7 @@ def setup_day_options(start_date, end_date, need_length=True):
         else:
             return day_options
 
-def check_digit(num_str, allow_enter_be_zero):
+def check_digit(num_str: str, allow_enter_be_zero: bool):
     if num_str == '':
         if allow_enter_be_zero:
             return True, 0
@@ -292,21 +292,21 @@ def check_digit(num_str, allow_enter_be_zero):
         print("Input must be a decimal number.")
         return False, 0
 
-def get_time_digit(time_div_str):
+def get_time_digit(time_div_str: str) -> int:
     valid_num = False
     while not valid_num:
         selector = input('Number of {}(s) to add:'.format(time_div_str))
         valid_num, digit = check_digit(selector, True)
     return digit
 
-def get_hour(day_num):
+def get_hour(day_num: int) -> int:
     valid_num = False
     while not valid_num:
         selector = input("Number of hours for {}:".format(weekdays[day_num]))
         valid_num, digit = check_digit(selector, False)
     return digit
 
-def create_days_dict(s_day_options, length, return_day_list=False, days=dict()):
+def create_days_dict(s_day_options: str, length: int, return_day_list: bool = False, days = dict()):
     if length == 1:
         length = day_options.find(s_day_options)  # length is repurposed to index of 'day_option' index
         day_str = str(length)
@@ -343,7 +343,7 @@ def create_days_dict(s_day_options, length, return_day_list=False, days=dict()):
     else:
         return days
 
-def get_name(type_text, name_list):
+def get_name(type_text: str, name_list: list) -> str:
     while 1:
         name = input("Name of {}:".format(type_text))
         if len(name) > 0:
@@ -354,7 +354,7 @@ def get_name(type_text, name_list):
         else:
             print("Name must be at least 1 character.")
 
-def add_menu():
+def add_menu() -> list:
     name_list = [x[0] for x in data['subjects']]
     print('\n\t--ADD SUBJECT--')
     name = get_name('Subject', name_list)
@@ -365,14 +365,14 @@ def add_menu():
     log_tools.tprint("Added Subject - " + name)
     return [name, days, start_date, end_date, [0, 0], [0, 0]]
 
-def display_subject_list():
+def display_subject_list() -> int:
     t = 0
     for subject in data["subjects"]:
         print("\t{} - {}".format(str(t), subject[0]))
         t += 1
     return t
 
-def validate_selector(a_string, num):
+def validate_selector(a_string: str, num: int) -> bool:
     if a_string.isnumeric():
         a = int(a_string)
         if 0 <= a < num:
@@ -381,7 +381,7 @@ def validate_selector(a_string, num):
             print(a_string + " is not a valid option")
             return False
 
-def remove_menu():
+def remove_menu() -> bool:
     if "subjects" in data and len(data['subjects']) > 0:
         while 1:
             print("\n--REMOVE MENU--")
@@ -407,11 +407,11 @@ def check_day_range(start_date_obj, end_date_obj, old_day_range):
             day_list.append(day)
     return day_range_change, day_list
 
-def remove_days_from_dict(subject, remove_list):
+def remove_days_from_dict(subject: int, remove_list: list) -> None:
     for i in remove_list:
         data['subjects'][subject][1].pop(i)
 
-def change_date(subject, date2change, date_word_str, length, new_start_date_obj, new_end_date_obj, new_date):
+def change_date(subject: int, date2change: int, date_word_str: str, length: int, new_start_date_obj, new_end_date_obj, new_date: str) -> None:
     if length < 7:
         day_range_change, day_list = check_day_range(new_start_date_obj, new_end_date_obj, [*data['subjects'][subject][1].keys()])
         if day_range_change:
@@ -458,7 +458,7 @@ def change_date(subject, date2change, date_word_str, length, new_start_date_obj,
         data['subjects'][subject][date2change] = new_date
         log_tools.tprint("Changed {} {} date from {} to {}. (Not Saved)".format(data['subjects'][subject][0], date_word_str, old, data['subjects'][subject][date2change]))
 
-def edit_time_tally(subject_choice, time_category):
+def edit_time_tally(subject_choice: int, time_category: int) -> None:
     selector = None
     print("\n--Edit {a} Tally of {b}--\nCurrent Tally: {c}h {d}m\nChanges are done by subtracting, not by directed edit.".format(a="Normal" if time_category == 4 else "Extra", b=data['subjects'][subject_choice][0], c=str(data['subjects'][subject_choice][time_category][0]), d=str(data['subjects'][subject_choice][time_category][1])))
     while selector != 'X':
@@ -505,7 +505,7 @@ def edit_time_tally(subject_choice, time_category):
         elif selector != "X":
             print("Invalid input.")
 
-def edit_menu():
+def edit_menu() -> bool:
     if "subjects" in data and len(data['subjects']) > 0:
         while 1:
             print("\n--EDIT SUBJECT MENU--\nExit and (S)ave Changes\ne(X)it without saving")
@@ -616,7 +616,7 @@ def edit_menu():
         print("\nSubject list is empty.")
     return False
 
-def add_hour_minute(subject, time_category, hour, minute):
+def add_hour_minute(subject: int, time_category: int, hour: int, minute: int) -> None:
     old_hour = data['subjects'][subject][time_category][0]
     old_minute = data['subjects'][subject][time_category][1]
     data['subjects'][subject][time_category][0] += hour
@@ -626,7 +626,7 @@ def add_hour_minute(subject, time_category, hour, minute):
         data['subjects'][subject][time_category][0] += 1
     log_tools.tprint("Increased {}{a} Hours from {b}h {c}m to {d}h {e}m.".format(data['subjects'][subject][0], a=" Normal" if time_category == 4 else " Extra", b=str(old_hour), c=str(old_minute), d=str(data['subjects'][subject][time_category][0]), e=str(data['subjects'][subject][time_category][1])))
 
-def time_convert_str(sec):
+def time_convert_str(sec: float) -> str:
     mins = sec // 60
     sec = int(sec % 60)
     hours = int(mins // 60)
@@ -634,7 +634,7 @@ def time_convert_str(sec):
     return '{a}:{b}:{c}'.format(a='0' + str(hours) if hours < 10 else str(hours), b='0' + str(mins) if mins < 10 else str(mins), c='0' + str(sec) if sec < 10 else str(sec))
 
 '''Found this getwch() method in getpass.py @ https://github.com/python/cpython/blob/3.8/Lib/getpass.py'''
-def thread_timer_cancel():
+def thread_timer_cancel() -> None:
     global s
     while 1:
         c = getwch()
@@ -645,7 +645,7 @@ def thread_timer_cancel():
         if c == '\003':
             raise KeyboardInterrupt
 
-def timer_tally():
+def timer_tally() -> bool:
     global s
     if "subjects" in data and len(data['subjects']) > 0:
         if use_live_update_timer:
@@ -686,7 +686,7 @@ def timer_tally():
                     current_time = current_time - start_time  # current_time repurposed to length of time span
                     current_time = int(current_time // 60)  # current_time repurposed to minutes
                     hours = current_time // 60
-                    current_time -= hours * 60
+                    current_time = current_time % 60
                     print('Timer stopped at {}\n'.format('{0}minute{s}'.format(current_time, s='' if current_time == 1 else 's') if hours == 0 else '{0}hour{s}{m}'.format(hours, s=' ' if hours == 1 else 's ', m='{0}minute{s}'.format(current_time, s='' if current_time == 1 else 's'))))
                     s = True
                     if current_time != 0 or hours != 0:
@@ -701,7 +701,7 @@ def timer_tally():
     print("Subject list in empty.")
     return False
 
-def add_to_tally():
+def add_to_tally() -> bool:
     if "subjects" in data and len(data['subjects']) > 0:
         while 1:
             print("\n\t--TALLY MENU--")
@@ -726,7 +726,7 @@ def add_to_tally():
     print("Subject list in empty.")
     return False
 
-def holiday_menu():
+def holiday_menu() -> bool:
     while 1:
         if len(data['holidays']) > 0:
             holiday_names = [*data['holidays'].keys()]
@@ -801,20 +801,20 @@ def holiday_menu():
             elif selector == 'S':
                 return True
 
-def get_description_of_tally_setting():
+def get_description_of_tally_setting() -> str:
     return 'Both' if settings['tallyEditHour'] and settings['tallyEditMinute'] else 'Hour' if settings['tallyEditHour'] else 'Minute'
 
-def change_tally_usage_setting(new_hour_bol, new_minute_bol):
+def change_tally_usage_setting(new_hour_bol: bool, new_minute_bol: bool) -> None:
     old = get_description_of_tally_setting()
     settings['tallyEditMinute'] = new_minute_bol
     settings['tallyEditHour'] = new_hour_bol
     log_tools.tprint('Changed Tally Usage - from {} to {} (Not Saved)'.format(old, get_description_of_tally_setting()))
 
-def toggle_boolean_setting(setting_key):
+def toggle_boolean_setting(setting_key: str) -> None:
     settings[setting_key] = not settings[setting_key]
     log_tools.tprint('Changed {} - from {} to {} (Not Saved)'.format(setting_key, str(not settings[setting_key]), str(settings[setting_key])))
 
-def settings_menu():
+def settings_menu() -> bool:
     while 1:
         print("\n\t--CURRENT SETTINGS--\n\t-Main Menu Display-\n\t1. Display Completed Percent:\t\t{}\n\t2. Display extra completed:\t\t{}\n\t3. Display extra Completed Percent:\t{}".format(str(settings['display completed %']), str(settings['display extra completed']), str(settings['display extra completed %'])))
         print('\n\t-Usage-\n\t(E)dit tallies by:\t' + get_description_of_tally_setting())
@@ -850,7 +850,7 @@ def settings_menu():
         else:
             print("Invalid input.")
 
-def check_for_backup(name, file_path):
+def check_for_backup(name: str, file_path: str) -> None:
     log_tools.tprint('{} file ({}) empty or corrupt.'.format(name, path.abspath(file_path)))
     if path.isfile(file_path[:-4] + 'old'):
         log_tools.tprint("Backup file (.old) is present.")

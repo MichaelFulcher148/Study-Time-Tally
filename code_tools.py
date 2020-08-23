@@ -1,20 +1,20 @@
-def countdown(i):
+def countdown(i: int) -> int:
     while i >= 0:
         yield i
         i -= 1
 
-def countup(i):
+def countup(i: int) -> int:
     f = 0
     while f < i:
         yield f
         f += 1
 
-def range_countup(start, end):
+def range_countup(start: int, end: int) -> int:
     while start < end:
         yield start
         start += 1
 
-def trim(data):
+def trim(data: list) -> list:
     data_length = len(data)
     i = 0
     not_wanted_chars = ['\t', ' ', '\r']  # \n and \U+000B been tried
@@ -41,7 +41,7 @@ def trim(data):
         i += 1
     return data
 
-def remove_spaces(a_string):
+def remove_spaces(a_string: str) -> str:
     length = len(a_string)
     while length > 1 and a_string[0] == ' ':
         a_string = a_string[1:]
@@ -51,7 +51,7 @@ def remove_spaces(a_string):
         length -= 1
     return a_string
 
-def folder_name_char_check(a_string):
+def folder_name_char_check(a_string: str) -> bool:
     non_valid_chars = '\\/?%*:|"<>.'
     for i in a_string:
         if i in non_valid_chars:
