@@ -529,7 +529,7 @@ def edit_menu() -> bool:
                     print("\n--Edit Subject {}--\ne(X)it to previous menu\n(S)ave changes\n1. Name\n2. Start Date\t\t{}\n3. End Date\t\t{}{d}\n6. Remove from Normal Tally\t{nh}h {nm}m\n7. Remove from Extra Tally\t{eh}h {em}m\n::Edit a Day".format(data['subjects'][subject_choice][0], data['subjects'][subject_choice][2], data['subjects'][subject_choice][3], d="\n4. Add Day\n5. Remove Day" if one_day_course is False else "", nh=str(data['subjects'][subject_choice][4][0]), nm=str(data['subjects'][subject_choice][4][1]), eh=str(data['subjects'][subject_choice][5][0]), em=str(data['subjects'][subject_choice][5][1])))
                     for day, hour in data['subjects'][subject_choice][1].items():
                         n += 1
-                        print("{}. {}\t\tHours: " + str(hour).format(str(n), weekdays[int(day)]))
+                        print("{}. {}\t\t{} Hour{s} ".format(n, weekdays[int(day)], hour, s='' if hour == 1 else 's'))
                     selector = input("Field to edit:").upper()
                     if selector == 'X':
                         break
