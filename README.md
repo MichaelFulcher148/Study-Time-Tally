@@ -16,5 +16,5 @@ Install Python 3.7+<br />
     
 ### Run script:
     Open Command Prompt:
-    Goto folder containing the .py files
+    Goto folder containing the study_time_tally.py file
     Run Command: study_time_tally.py
