@@ -5,7 +5,7 @@ from datetime import timedelta, datetime
 from math import ceil
 from os import path, rename as file_rename, remove as file_del
 
-import log_tools
+from tools import log_tools
 
 """Study Time Tally
     By Michael Fulcher
@@ -161,8 +161,7 @@ def tally_hours(start_date: str, end_date: str, day_dict: dict) -> int:
     return n
 
 def tabs_list(a_list: list):  # generate data for correct spacing in data display columns
-    t_width = 0
-    n = 0
+    t_width = n = 0
     tabs = list()
     for item_name in a_list:
         tabs.append(len(item_name))
@@ -207,7 +206,7 @@ def hours_display(item1: str, item2: str) -> str:
 
 def main_menu() -> chr:
     valid_option = False
-    ##add past work and work hours needed to meet obligation
+    # add past work and work hours needed to meet obligation
     if "subjects" in data and len(data["subjects"]) > 0:
         items_present = True
         t_width, add_space, tabs = tabs_list([i[0] for i in data['subjects']])
@@ -215,7 +214,9 @@ def main_menu() -> chr:
         items_present = False
     while not valid_option:
         if items_present:
-            line = '\nTally totals:\nName{a}{b}Hours Owing\tHours Completed{c}'.format(a='\t' * t_width, b=' ' if add_space else '', c=hours_display('\t%', '|Extra Completed'))
+            tabs_section = '\t' * t_width
+            line_end = hours_display("\t%", "|Extra Completed")
+            line = f'\nTally totals:\nName{tabs_section}{" " if add_space else ""}Hours Owing\tHours Completed{line_end}'
             if settings['display extra completed %']:
                 if not settings['display extra completed']:
                     line += '\t|'
@@ -224,14 +225,22 @@ def main_menu() -> chr:
             n = 0
             for subject in data["subjects"]:
                 hours = tally_hours(subject[2], subject[3], subject[1])
-                line = '{a}{b}{c}{d}\t\t{h}h {m}m\t'.format(a=subject[0], b='\t'*tabs[n], c=' ' if add_space else '', d=str(hours), h=str(subject[4][0]), m=str(subject[4][1]))
-                line += hours_display('\t{:.1%}'.format((subject[4][0] * 60 + subject[4][1]) / (hours * 60)), '|{}h {}m\t'.format(str(subject[5][0]), str(subject[5][1])))
+                tabs_section = "\t" * tabs[n]
+                line = f'{subject[0]}{tabs_section}{" " if add_space else ""}{hours}\t\t{subject[4][0]}h {subject[4][1]}m\t'
+                if subject[4][0] == 0 and subject[4][1] == 0:
+                    percent = 0
+                    zero_in_normal_hours = True
+                else:
+                    percent = (subject[4][0] * 60 + subject[4][1]) / (hours * 60)
+                    zero_in_normal_hours = False
+                line += hours_display(f'\t{percent * 100:.1f}%', f'|{subject[5][0]}h {subject[5][1]}m\t')
                 if settings['display extra completed %']:
                     if not settings['display extra completed']:
                         line += '\t|'
                     else:
                         line += '\t '
-                    line += '{:.1%}'.format(((subject[4][0] + subject[5][0]) * 60 + subject[4][1] + subject[5][1]) / (hours * 60))
+                    percent = 0 if zero_in_normal_hours == True and subject[5][0] == 0 and subject[5][1] == 0 else ((subject[4][0] + subject[5][0]) * 60 + subject[4][1] + subject[5][1]) / (hours * 60)
+                    line += f'{percent * 100:.1f}%'
                 print(line)
                 n += 1
         else:
@@ -306,7 +315,7 @@ def get_hour(day_num: int) -> int:
         valid_num, digit = check_digit(selector, False)
     return digit
 
-def create_days_dict(s_day_options: str, length: int, return_day_list: bool = False, days = dict()):
+def create_days_dict(s_day_options: str, length: int, return_day_list: bool=False, days=dict()):
     if length == 1:
         length = day_options.find(s_day_options)  # length is repurposed to index of 'day_option' index
         day_str = str(length)
@@ -687,7 +696,7 @@ def timer_tally() -> bool:
                     current_time = int(current_time // 60)  # current_time repurposed to minutes
                     hours = current_time // 60
                     current_time = current_time % 60
-                    print('Timer stopped at {}\n'.format('{0}minute{s}'.format(current_time, s='' if current_time == 1 else 's') if hours == 0 else '{0}hour{s}{m}'.format(hours, s=' ' if hours == 1 else 's ', m='{0}minute{s}'.format(current_time, s='' if current_time == 1 else 's'))))
+                    print('Timer stopped at {}\n'.format('{0} minute{s}'.format(current_time, s='' if current_time == 1 else 's') if hours == 0 else '{0} hour{s} {m}'.format(hours, s=' ' if hours == 1 else 's ', m='{0} minute{s}'.format(current_time, s='' if current_time == 1 else 's'))))
                     s = True
                     if current_time != 0 or hours != 0:
                         add_hour_minute(selector, time_category, hours, current_time)
@@ -861,6 +870,7 @@ def check_for_backup(name: str, file_path: str) -> None:
             print("\t\tIt is highly likely you have suffered some data loss.\t\tConsider renaming old2 file to JSON.")
         else:
             log_tools.tprint("No backup {} file found.".format(name))
+
 
 if __name__ == "__main__":
     if 'idlelib.run' in sys.modules:
