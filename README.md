@@ -7,8 +7,11 @@
 
 ## Description:
 Track your study hours.
+###Platform: Windows command prompt
 
 ## Instructions:
+Download: Click "Code" button then "Download Zip"
+
 Install Python 3.7+<br />
         
     Copy to a folder the following files:
