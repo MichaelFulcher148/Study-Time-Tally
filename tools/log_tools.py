@@ -10,9 +10,9 @@ def initialize(enable_html: bool = True) -> None:
         global html_output_file
         html_output_file = list()
     from os import path
-    if not path.isdir(r'../logs'):
+    if not path.isdir(r'./logs'):
         from os import makedirs
-        makedirs('../logs')
+        makedirs('./logs')
         tprint("Log directory created.\n")
         del makedirs
     del path
