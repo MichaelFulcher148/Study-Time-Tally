@@ -12,7 +12,7 @@ from tools import log_tools
 
     Send Donations (recommended $1.50USD) to -
     PayPal: mjfulcher58@gmail.com
-    Bitcoin: 3EjKSBQka7rHaLqKMXKZ8t7sHDa546GWAd
+    Bitcoin: 3DXiJxie6En3wcyxjmKZeY2zFLEmK8y42U
     Other options @ http://michaelfulcher.yolasite.com/
 """
 '''[0] Name of Subject, [1] Days to iterate required hours up and Amount of hours per day in,
@@ -58,22 +58,22 @@ def get_date() -> str:
 
 def validate_start_date(end_date: str, old: str) -> str:
     while 1:
-        print("\nStart Date, format - dd/mm/yyyy. Current Date ({})".format(old))
+        print(f"\nStart Date, format - dd/mm/yyyy. Current Date ({old})")
         start_date = get_date()
         if datetime.strptime(end_date, '%d/%m/%Y').date() > datetime.strptime(start_date, '%d/%m/%Y').date():
-            print("Start date must be before the end date ({}).".format(end_date))
+            print(f"Start date must be before the end date ({end_date}).")
         else:
             return start_date
 
 def validate_end_date(start_date: str, old: str = None) -> str:
     while 1:
         if old:
-            print("\nEnd Date, format - dd/mm/yyyy. Current Date ({})".format(old))
+            print(f"\nEnd Date, format - dd/mm/yyyy. Current Date ({old})")
         else:
             print("\nEnd Date, format - dd/mm/yyyy.")
         end_date = get_date()
         if datetime.strptime(end_date, '%d/%m/%Y').date() < datetime.strptime(start_date, '%d/%m/%Y').date():
-            print("End date must be after the start date ({}).".format(start_date))
+            print(f"End date must be after the start date ({start_date}).")
         else:
             return end_date
 
@@ -181,10 +181,14 @@ def tabs_list(a_list: list):  # generate data for correct spacing in data displa
 
 def display_holiday_list(add_numbers: bool = False) -> int:
     t_width, add_space, tabs = tabs_list([*data['holidays'].keys()])
-    print('\nSaved Holidays:\n{a}Name{b}{c}Start Date\tEnd Date'.format(a='\t' if add_numbers else '', b='\t'*t_width, c=' ' if add_space else ''))
+    add_numbers_str = '\t' if add_numbers else ''
+    tab_section = '\t' * t_width
+    print(f"\nSaved Holidays:\n{add_numbers_str}Name{tab_section}{' ' if add_space else ''}Start Date\tEnd Date")
     n = 0
     for holiday, dates in data['holidays'].items():
-        print('{a}{h}{b}{c}{d0}\t{d1}'.format(a=str(n) + '.\t' if add_numbers else '', h=holiday, b='\t' * tabs[n], c=' ' if add_space else '', d0=dates[0], d1=dates[1]))
+        add_numbers_str = str(n) + '.\t' if add_numbers else ''
+        tab_section = '\t' * tabs[n]
+        print(f"{add_numbers_str}{holiday}{tab_section}{' ' if add_space else ''}{dates[0]}\t{dates[1]}")
         n += 1
     return n
 
@@ -625,6 +629,9 @@ def edit_menu() -> bool:
         print("\nSubject list is empty.")
     return False
 
+def add_to_daily_tally(hour, minute):
+    pass
+
 def add_hour_minute(subject: int, time_category: int, hour: int, minute: int) -> None:
     old_hour = data['subjects'][subject][time_category][0]
     old_minute = data['subjects'][subject][time_category][1]
@@ -633,6 +640,7 @@ def add_hour_minute(subject: int, time_category: int, hour: int, minute: int) ->
     while data['subjects'][subject][time_category][1] > 59:
         data['subjects'][subject][time_category][1] -= 60
         data['subjects'][subject][time_category][0] += 1
+    ## add daily tally here
     log_tools.tprint("Increased {}{a} Hours from {b}h {c}m to {d}h {e}m.".format(data['subjects'][subject][0], a=" Normal" if time_category == 4 else " Extra", b=str(old_hour), c=str(old_minute), d=str(data['subjects'][subject][time_category][0]), e=str(data['subjects'][subject][time_category][1])))
 
 def time_convert_str(sec: float) -> str:
@@ -640,7 +648,7 @@ def time_convert_str(sec: float) -> str:
     sec = int(sec % 60)
     hours = int(mins // 60)
     mins = int(mins % 60)
-    return '{a}:{b}:{c}'.format(a='0' + str(hours) if hours < 10 else str(hours), b='0' + str(mins) if mins < 10 else str(mins), c='0' + str(sec) if sec < 10 else str(sec))
+    return f"{'0' + str(hours) if hours < 10 else str(hours)}:{'0' + str(mins) if mins < 10 else str(mins)}:{'0' + str(sec) if sec < 10 else str(sec)}"
 
 '''Found this getwch() method in getpass.py @ https://github.com/python/cpython/blob/3.8/Lib/getpass.py'''
 def thread_timer_cancel() -> None:
@@ -675,7 +683,7 @@ def timer_tally() -> bool:
                     return False
                 elif c == '':
                     start_time = time.time()
-                    log_tools.tprint('Timer for {} started'.format(data['subjects'][selector][0]))
+                    log_tools.tprint(f"Timer for {data['subjects'][selector][0]} started")
                     if use_live_update_timer:
                         x.start()
                         print('Press Enter to stop timer')
@@ -702,7 +710,7 @@ def timer_tally() -> bool:
                         add_hour_minute(selector, time_category, hours, current_time)
                         return True
                     else:
-                        log_tools.tprint('Time span for {} was less than 1 minute, nothing saved.'.format(data['subjects'][selector][0]))
+                        log_tools.tprint(f'Time span for {data["subjects"][selector][0]} was less than 1 minute, nothing saved.')
                         return False
                 else:
                     print('Invalid command, returning to main menu.')
@@ -762,7 +770,7 @@ def holiday_menu() -> bool:
                     print('\n\t--REMOVE HOLIDAY MENU--\n\te(X)it\n')
                     n = display_holiday_list(True)
                     field = input('Holiday to remove:').upper()
-                    if selector == "X":
+                    if field == "X":
                         break
                     elif validate_selector(field, n):
                         num = int(field)
@@ -890,7 +898,7 @@ if __name__ == "__main__":
     weekdays = ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
     menu_weekdays = ("(M)onday", "(T)uesday", "(W)ednesday", "T(H)ursday", "(F)riday", "(S)aturday", "S(U)nday")
 
-    print("Study Time Tally\n\tBy Michael Fulcher\nSend Donations to - PayPal: mjfulcher58@gmail.com or Bitcoin: 3EjKSBQka7rHaLqKMXKZ8t7sHDa546GWAd -- Suggested Donation: $1.50USD\nOther donation options @ http://michaelfulcher.yolasite.com/\n\n")
+    print("Study Time Tally\n\tBy Michael Fulcher\nSend Donations to - PayPal: mjfulcher58@gmail.com or Bitcoin: 3DXiJxie6En3wcyxjmKZeY2zFLEmK8y42U -- Suggested Donation: $1.50USD\nOther donation options @ http://michaelfulcher.yolasite.com/\n\n")
     if not path.isdir(r'.\data'):
         from os import makedirs
         makedirs('data')
