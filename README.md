@@ -2,7 +2,7 @@
 
     Send Donations to (Suggested donation amount: $1.50USD) -
     PayPal: mjfulcher58@gmail.com
-    Bitcoin: 3EjKSBQka7rHaLqKMXKZ8t7sHDa546GWAd
+    Bitcoin: 3DXiJxie6En3wcyxjmKZeY2zFLEmK8y42U
     Other options @ http://michaelfulcher.yolasite.com/other-crypto-donation-options.php
 
 ## Description:
