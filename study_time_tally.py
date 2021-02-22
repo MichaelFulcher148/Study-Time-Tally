@@ -231,7 +231,7 @@ def main_menu() -> chr:
                 hours = tally_hours(subject[2], subject[3], subject[1])
                 tabs_section = "\t" * tabs[n]
                 line = f'{subject[0]}{tabs_section}{" " if add_space else ""}{hours}\t\t{subject[4][0]}h {subject[4][1]}m\t'
-                if subject[4][0] == 0 and subject[4][1] == 0:
+                if subject[4][0] == 0 and subject[4][1] == 0 or hours == 0:
                     percent = 0
                     zero_in_normal_hours = True
                 else:
