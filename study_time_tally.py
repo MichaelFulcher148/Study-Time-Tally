@@ -3,8 +3,8 @@ import sys
 import time
 from datetime import timedelta, datetime
 from math import ceil
-from os import path, rename as file_rename, remove as file_del
-
+from os import path
+from tools.file import save_json, check_for_backup
 from tools import log_tools
 
 """Study Time Tally
@@ -17,19 +17,6 @@ from tools import log_tools
 """
 '''[0] Name of Subject, [1] Days to iterate required hours up and Amount of hours per day in,
 [2] Start date, [3] End Date, [4] Hours done'''
-
-def save_json(f_data: dict, json_path: str, label: str) -> None:
-    json_path_old = json_path[:-4] + 'old'
-    json_path_old2 = json_path_old + '2'
-    if path.isfile(json_path):
-        if path.isfile(json_path_old):
-            if path.isfile(json_path_old2):
-                file_del(json_path_old2)
-            file_rename(json_path_old, json_path_old2)
-        file_rename(json_path, json_path_old)
-    with open(json_path, 'w', encoding='utf-8') as out:
-        json.dump(f_data, out, ensure_ascii=False, indent=4)
-    log_tools.tprint(label + ' JSON Written')
 
 def menu_char_check(a_word: str, options: str) -> bool:
     message = " is not a valid input"
@@ -169,10 +156,7 @@ def tabs_list(a_list: list):  # generate data for correct spacing in data displa
             t_width = tabs[n]
         n += 1
     n -= 1
-    if t_width % 8 == 0:
-        add_space = True
-    else:
-        add_space = False
+    add_space = True if t_width % 8 == 0 else False
     t_width = ceil(t_width/8)
     while n >= 0:
         tabs[n] = t_width - tabs[n]//8
@@ -866,18 +850,6 @@ def settings_menu() -> bool:
                     print("Invalid input.")
         else:
             print("Invalid input.")
-
-def check_for_backup(name: str, file_path: str) -> None:
-    log_tools.tprint('{} file ({}) empty or corrupt.'.format(name, path.abspath(file_path)))
-    if path.isfile(file_path[:-4] + 'old'):
-        log_tools.tprint("Backup file (.old) is present.")
-        print("\t\tIt is likely you have suffered some data loss.\t\tConsider renaming old file to JSON.")
-    else:
-        if path.isfile(file_path[:-4] + 'old2'):
-            log_tools.tprint("Backup file (.old2) is present.")
-            print("\t\tIt is highly likely you have suffered some data loss.\t\tConsider renaming old2 file to JSON.")
-        else:
-            log_tools.tprint("No backup {} file found.".format(name))
 
 
 if __name__ == "__main__":
