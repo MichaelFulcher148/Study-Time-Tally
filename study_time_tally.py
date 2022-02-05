@@ -47,7 +47,7 @@ def validate_start_date(end_date: str, old: str) -> str:
     while 1:
         print(f"\nStart Date, format - dd/mm/yyyy. Current Date ({old})")
         start_date = get_date()
-        if datetime.strptime(end_date, '%d/%m/%Y').date() > datetime.strptime(start_date, '%d/%m/%Y').date():
+        if datetime.strptime(end_date, '%d/%m/%Y').date() < datetime.strptime(start_date, '%d/%m/%Y').date():
             print(f"Start date must be before the end date ({end_date}).")
         else:
             return start_date
