@@ -86,16 +86,14 @@ def tally_hours(start_date: str, end_date: str, day_dict: dict) -> int:
     range_list = [[date_start, date_today]]
     if 'holidays' in data and len(data['holidays']) > 0:
         holiday_list = list()
-        holiday_dict = dict()
         for name, date in data['holidays'].items():
             holiday_start = datetime.strptime(date[0], '%d/%m/%Y').date()
             holiday_end = datetime.strptime(date[1], '%d/%m/%Y').date()
             if overlap_check(date_start, date_today, holiday_start, holiday_end):
-                holiday_list.append(name)
-                holiday_dict[name] = [holiday_start, holiday_end]
+                holiday_list.append([holiday_start, holiday_end])
         one_day = timedelta(days=1)
         rangelist_size = 1
-        for holiday in holiday_dict.values():
+        for holiday in holiday_list:
             n = 0
             while n < rangelist_size:  # holiday_start = holiday[0], holiday_end = holiday[1]
                 # term_end = range_list[n][1], term_start = range_list[n][0]
