@@ -6,13 +6,13 @@
     Other options @ http://michaelfulcher.yolasite.com/other-crypto-donation-options.php
 
 ## Description:
-Track your study hours.<br />
+Track your study hours.  
 **Platform:** Windows command prompt
 
 ## Instructions:
     Download: Click "Code" button then click "Download ZIP"
     
-    Install Python 3.7+<br />
+    Install Python 3.7+  
     Make sure you enable "add to PATH" during install.
         
     Copy to a folder the following files:
