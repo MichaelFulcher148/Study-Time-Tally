@@ -913,7 +913,7 @@ def edit_menu_db() -> None:
                         changed_display_enable.clear()
                     for db_id in update_entryType_list:
                         results = cur.execute("SELECT startDate, endDate FROM Subject WHERE ID = (?)", (db_id,)).fetchone()
-                        cur.execute("UPDATE WorkLog SET timeType = IIF(logTimestamp >= (?) AND logTimestamp <= (?), 0, 1) WHERE subjectID = (?)", (results[0] + ' 00:00:00', results[1] + ' 23:59:59', db_id))
+                        cur.execute("UPDATE WorkLog SET timeType = IIF(logTimestamp >= (?) AND logTimestamp <= (?), 0, 1) WHERE subjectID = (?) AND entryType != 0", (results[0] + ' 00:00:00', results[1] + ' 23:59:59', db_id))
                     db_con.commit()
                     db_con.close()
                     unsaved_changes = False
@@ -1004,7 +1004,7 @@ def edit_menu_db() -> None:
                                 changed_display_enable.pop(subjects[selector_int][0])
                             if this_field_unsaved_changes:
                                 results = cur.execute("SELECT startDate, endDate FROM Subject WHERE ID = (?)", (subjects[selector_int][0],)).fetchone()
-                                cur.execute("UPDATE WorkLog SET timeType = IIF(logTimestamp >= (?) AND logTimestamp <= (?), 0, 1) WHERE subjectID = (?)", (results[0] + ' 00:00:00', results[1] + ' 23:59:59', subjects[selector_int][0]))
+                                cur.execute("UPDATE WorkLog SET timeType = IIF(logTimestamp >= (?) AND logTimestamp <= (?), 0, 1) WHERE subjectID = (?) AND entryType != 0", (results[0] + ' 00:00:00', results[1] + ' 23:59:59', subjects[selector_int][0]))
                             db_con.commit()
                             db_con.close()
                             if not (indexes_of_changed_names or changed_start_date or changed_end_date or changed_normal_time or changed_display_enable or changed_extra_time or changed_days):
