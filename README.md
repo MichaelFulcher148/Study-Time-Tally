@@ -25,10 +25,10 @@ Track your study hours.
 
 ### How to use:
 **Step 1:** Run the Script  
-**Step 2:** Press **A** then **<enter>** to add a subject to the programme, follow the instructions.  
+**Step 2:** Press **A** then **<****enter****>** to add a subject to the programme, follow the instructions.  
 **Step 3:** Press **T** for manually entering an amount of time to your tally, or Press **I** to use a timer to measure your study/work session.  
 **Step 4:** Select your subject/job from the list.  
-**Step 5:** If you choose **"T"** enter your time (either hours or minutes [option under -Usage- in (S)ettings menu]) and press **enter**. If you choose **"I"** press **enter** when prompted to start the timer and enter again to stop the timer.  New time amounts are saved automatically.
+**Step 5:** If you choose **"T"** enter your time (either hours or minutes [option under -Usage- in (S)ettings menu]) and press **<****enter****>**. If you choose **"I"** press **<****enter****>** when prompted to start the timer and **<****enter****>** again to stop the timer.  New time amounts are saved automatically.
 
 ### Usage Options:
 #### Main menu display has three customizable options:  
