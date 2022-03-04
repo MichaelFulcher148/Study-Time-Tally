@@ -34,7 +34,8 @@ Track your study hours.
 #### Main menu display has three customizable options:  
 **Display Completed Percent:** Display percent of hours owing covered by tally that are inside the hours of the course/work term.  
 **Display extra completed:** Display amount of tally outside the hours of the course/work term.  
-**Display extra Completed Percent:** Display percent of hours owing covered by tally that are outside the hours of the course/work term.  
+**Display extra Completed Percent:** Display percent of hours owing covered by tally that are outside the hours of the course/work term.
+**Display Recent Activity:** Display total hours per day over the past 7 days. (if no log on a day, then day will not be displayed)
     
 #### Usage of (T)ally option:
 Can be entered in Minutes, Hours or both.
