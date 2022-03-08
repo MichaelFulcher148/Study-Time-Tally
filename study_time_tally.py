@@ -1391,9 +1391,10 @@ def timer_tally() -> bool:
                     if new_tally[1] != 0 or new_tally[0] != 0:
                         db_trans_commit_WorkLog(new_tally, subjects[selector][0], 2)
                         log_tools.tprint(f"DB Add: WorkLog - Timer Tally - subjectID: {subjects[selector][0]} - subjectName:{subjects[selector][1]} - {new_tally[0]}h {new_tally[1]}m")
-                        past_hours['day1Tally'][0] += new_tally[0]
-                        past_hours['day1Tally'][1] += new_tally[1]
-                        correct_time_format_for_pos_minute(past_hours['day1Tally'])
+                        if settings['useRecentHoursDisplay']:
+                            past_hours['day1Tally'][0] += new_tally[0]
+                            past_hours['day1Tally'][1] += new_tally[1]
+                            correct_time_format_for_pos_minute(past_hours['day1Tally'])
         else:
             print("No subjects found in Database")
     else:
@@ -1444,9 +1445,10 @@ def add_to_tally() -> bool:
                         # add to yesterdays time, correct yesterday
                         db_trans_commit_WorkLog(new_tally, subjects[selector][0], 1)
                         log_tools.tprint(f"DB Add: WorkLog Manual Tally - subjectID: {subjects[selector][0]} - subjectName:{subjects[selector][1]} - {new_tally[0]}h {new_tally[1]}m")
-                        past_hours['day1Tally'][0] += new_tally[0]
-                        past_hours['day1Tally'][1] += new_tally[1]
-                        correct_time_format_for_pos_minute(past_hours['day1Tally'])
+                        if settings['useRecentHoursDisplay']:
+                            past_hours['day1Tally'][0] += new_tally[0]
+                            past_hours['day1Tally'][1] += new_tally[1]
+                            correct_time_format_for_pos_minute(past_hours['day1Tally'])
                         break
                     else:
                         print("No time recorded because no data entered")
