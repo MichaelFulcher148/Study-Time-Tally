@@ -264,22 +264,7 @@ def main_menu() -> chr:
     while not valid_option:
         if items_present:
             if settings['useRecentHoursDisplay']:
-                n = (datetime.now().date() - last_past_hours_update).days
-                last_past_hours_update = datetime.now().date()
-                if n > 0:
-                    past_hours_reset = True
-                    last_hours_update = datetime.now().date()
-                    for j in range(n):
-                        for i in range(7):
-                            if i == 6:
-                                past_hours[daily_progress_keys[6]] = [0, 0]
-                            else:
-                                if daily_progress_keys[i + 1] not in past_hours:
-                                    if daily_progress_keys[i] in past_hours:
-                                        past_hours.pop(daily_progress_keys[i])
-                                else:
-                                    past_hours[daily_progress_keys[i]] = past_hours[daily_progress_keys[i + 1]]
-                if past_hours_reset:
+                if check_fix_daily_progress() or past_hours_reset:
                     past_hours_reset = False
                     dailykey_to_dayname = dict()
                     n = last_past_hours_update.weekday()
@@ -327,6 +312,24 @@ def main_menu() -> chr:
         menu_option = input("Choose Option:").upper()
         valid_option = menu_char_check(menu_option, 'TIXAREHS')
     return menu_option
+
+def check_fix_daily_progress():
+    global last_past_hours_update
+    n = (datetime.now().date() - last_past_hours_update).days
+    if n == 0:
+        return False
+    for j in range(n):
+        for i in range(7):
+            if i == 6:
+                past_hours[daily_progress_keys[6]] = [0, 0]
+            else:
+                if daily_progress_keys[i + 1] not in past_hours:
+                    if daily_progress_keys[i] in past_hours:
+                        past_hours.pop(daily_progress_keys[i])
+                else:
+                    past_hours[daily_progress_keys[i]] = past_hours[daily_progress_keys[i + 1]]
+    last_past_hours_update = datetime.now().date()
+    return True
 
 def print_selected_days(day_list: list) -> None:
     if day_list:
@@ -1370,7 +1373,7 @@ def db_trans_commit_WorkLog(new_tally: list, subject_id: int, entry_type: int) -
             db_con.commit()
 
 def timer_tally() -> bool:
-    global timer_running
+    global timer_running, last_past_hours_update
     if settings['useDB']:
         subjects = get_enabled_subjects(database_path)
         length = len(subjects)
@@ -1392,6 +1395,7 @@ def timer_tally() -> bool:
                         db_trans_commit_WorkLog(new_tally, subjects[selector][0], 2)
                         log_tools.tprint(f"DB Add: WorkLog - Timer Tally - subjectID: {subjects[selector][0]} - subjectName:{subjects[selector][1]} - {new_tally[0]}h {new_tally[1]}m")
                         if settings['useRecentHoursDisplay']:
+                            check_fix_daily_progress()
                             past_hours['day1Tally'][0] += new_tally[0]
                             past_hours['day1Tally'][1] += new_tally[1]
                             correct_time_format_for_pos_minute(past_hours['day1Tally'])
@@ -1422,6 +1426,7 @@ def get_tally_digits():
     return get_time_digit('hour') if settings['tallyEditHour'] else 0, get_time_digit('minute') if settings['tallyEditMinute'] else 0
 
 def add_to_tally() -> bool:
+    global last_past_hours_update
     if settings['useDB']:
         subjects = get_enabled_subjects(database_path)
         length = len(subjects)
@@ -1446,6 +1451,7 @@ def add_to_tally() -> bool:
                         db_trans_commit_WorkLog(new_tally, subjects[selector][0], 1)
                         log_tools.tprint(f"DB Add: WorkLog Manual Tally - subjectID: {subjects[selector][0]} - subjectName:{subjects[selector][1]} - {new_tally[0]}h {new_tally[1]}m")
                         if settings['useRecentHoursDisplay']:
+                            check_fix_daily_progress()
                             past_hours['day1Tally'][0] += new_tally[0]
                             past_hours['day1Tally'][1] += new_tally[1]
                             correct_time_format_for_pos_minute(past_hours['day1Tally'])
