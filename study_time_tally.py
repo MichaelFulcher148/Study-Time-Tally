@@ -961,6 +961,7 @@ def edit_menu_db() -> None:
                             log_tools.tprint(f"Saving changes to {subjects[selector_int][1]} to Database")
                             with closing(sqlite3.connect(database_path)) as db_con:
                                 with closing(db_con.cursor()) as cur:
+                                    this_field_unsaved_changes = False
                                     if subjects[selector_int][0] in indexes_of_changed_names:
                                         db_trans_change_subject_name(cur, subjects[selector_int][0], get_name_frm_subjects_list(subjects[selector_int][0], subjects), changed_names[subjects[selector_int][0]])
                                         changed_names.pop(subjects[selector_int][0])
