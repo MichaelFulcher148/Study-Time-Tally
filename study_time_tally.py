@@ -85,7 +85,7 @@ def tally_hours(start_date: str, end_date: str, day_dict: dict, cur=None) -> int
     range_list = [[date_start, date_today]]
     holiday_list = list()
     if cur:
-        results = cur.execute("SELECT startDate, endDate FROM Holiday WHERE startDate > (?) AND endDate < (?)", (date_start.strftime('%Y-%m-%d'), date_today.strftime('%Y-%m-%d'))).fetchall()
+        results = cur.execute("SELECT startDate, endDate FROM Holiday WHERE startDate BETWEEN (?) AND (?)", (date_start.strftime('%Y-%m-%d'), date_today.strftime('%Y-%m-%d'))).fetchall()
         for holiday in results:
             holiday_list.append([datetime.strptime(holiday[0], '%Y-%m-%d').date(), datetime.strptime(holiday[1], '%Y-%m-%d').date()])
     else:
