@@ -87,8 +87,7 @@ def tally_hours(start_date: str, end_date: str, day_dict: dict, cur=None) -> int
     if cur:
         start_str = date_start.strftime('%Y-%m-%d')
         end_str = date_today.strftime('%Y-%m-%d')
-        results = cur.execute("SELECT startDate, endDate FROM Holiday WHERE startDate BETWEEN (?) AND (?) OR endDate BETWEEN (?) AND (?)", (start_str, end_str, start_str, end_str)).fetchall()
-        for holiday in results:
+        for holiday in cur.execute("SELECT startDate, endDate from Holiday WHERE (JULIANDAY(MIN(endDate, (?))) - JULIANDAY(MAX(startDate, (?)))) + 1 > 0", (end_str, start_str)).fetchall():
             holiday_list.append([datetime.strptime(holiday[0], '%Y-%m-%d').date(), datetime.strptime(holiday[1], '%Y-%m-%d').date()])
     else:
         if 'holidays' in data and len(data['holidays']) > 0:
