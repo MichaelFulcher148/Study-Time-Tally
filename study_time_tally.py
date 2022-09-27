@@ -83,11 +83,10 @@ def tally_hours(start_date: str, end_date: str, day_dict: dict, cur=None) -> int
     if date_end < date_today:
         date_today = date_end
     range_list = [[date_start, date_today]]
+    ## if check_holiday
     holiday_list = list()
     if cur:
-        start_str = date_start.strftime('%Y-%m-%d')
-        end_str = date_today.strftime('%Y-%m-%d')
-        for holiday in cur.execute("SELECT startDate, endDate from Holiday WHERE (JULIANDAY(MIN(endDate, (?))) - JULIANDAY(MAX(startDate, (?)))) + 1 > 0", (end_str, start_str)).fetchall():
+        for holiday in cur.execute("SELECT startDate, endDate from Holiday WHERE (JULIANDAY(MIN(endDate, (?))) - JULIANDAY(MAX(startDate, (?)))) + 1 > 0", (date_today.strftime('%Y-%m-%d'), date_start.strftime('%Y-%m-%d'))).fetchall():
             holiday_list.append([datetime.strptime(holiday[0], '%Y-%m-%d').date(), datetime.strptime(holiday[1], '%Y-%m-%d').date()])
     else:
         if 'holidays' in data and len(data['holidays']) > 0:
@@ -1590,7 +1589,7 @@ def holiday_menu_db() -> None:
                             field = input("WARNING: Found items in remove list, (Y) to confirm that you want these items removed from the Database, (N) to cancel removal:").upper()
                     with closing(sqlite3.connect(database_path)) as db_con:
                         with closing(db_con.cursor()) as cur:
-                            if field == 'Y':
+                            if removed and field == 'Y':
                                 for id in removed:
                                     if id in id_to_name.keys():
                                         cur.execute("DELETE FROM Holiday WHERE ID = (?)", (id,))
