@@ -397,12 +397,14 @@ def get_hour(day_num: int) -> int:
         valid_num, digit = check_digit(selector, False)
     return digit
 
-def create_days_dict(s_day_options: str, length: int, return_day_list: bool = False, days=dict()):
+def create_days_dict(s_day_options: str, length: int, return_day_list: bool = False, days=None):
     """Creates dictionary of given options str, length, return_day_list: bool, days dict: optional
 
     Returns dict of days
     if return_day_list = True
     Returns dict of days, days_options str"""
+    if days is None:
+        days = dict()
     if length == 1:
         length = day_options.find(s_day_options)  # length is repurposed to index of 'day_option' index
         day_str = str(length)
