@@ -308,9 +308,9 @@ def main_menu() -> chr:
                     n += 1
         else:
             print("Subject list is empty.")
-        print('\n\t--MAIN MENU--\n\tAdd to (T)ally\n\tUse t(I)mer to Add to Tally\n\t(A)dd Subject\n\t(R)emove Subject\n\t(E)dit Subject\n\t(H)olidays Menu\n\t(S)ettings Menu\n\te(X)it')
+        print('\n\t--MAIN MENU--\n\tAdd to (T)ally\n\tUse t(I)mer to Add to Tally\n\t(D)isplay Timesheet\n\t(A)dd Subject\n\t(R)emove Subject\n\t(E)dit Subject\n\t(H)olidays Menu\n\t(S)ettings Menu\n\te(X)it')
         menu_option = input("Choose Option:").upper()
-        valid_option = menu_char_check(menu_option, 'TIXAREHS')
+        valid_option = menu_char_check(menu_option, 'TIXDAREHS')
     return menu_option
 
 def check_fix_daily_progress():
@@ -1448,9 +1448,9 @@ def add_to_tally() -> bool:
                     print("Adding to Tally of " + subjects[selector][1])
                     new_tally = list(get_tally_digits())
                     if new_tally[1] != 0 or new_tally[0] != 0:
-                        # get time from begining of day
+                        # get time from beginning of day
                         # if new tally + day1Tally > minutes of this day split time log
-                        # add to yesterdays time, correct yesterday
+                        # add to yesterday's time, correct yesterday
                         db_trans_commit_WorkLog(new_tally, subjects[selector][0], 1)
                         log_tools.tprint(f"DB Add: WorkLog Manual Tally - subjectID: {subjects[selector][0]} - subjectName:{subjects[selector][1]} - {new_tally[0]}h {new_tally[1]}m")
                         if settings['useRecentHoursDisplay']:
@@ -1913,6 +1913,41 @@ def get_past_hours(now_time):
         output_dict['day1Tally'] = [0, 0]
     return output_dict
 
+def display_timesheet():
+    subjects = get_enabled_subjects(database_path)
+    length = len(subjects)
+    if length > 0:
+        while 1:
+            n = 0
+            print("\n\t--DISPLAY TIMESHEET MENU--")
+            for subj in subjects:
+                n += 1
+                print(f"\t{n} - {subj[1]}")
+            selector = input("Subject to display:").upper()
+            if selector == 'X':
+                break
+            elif validate_selector(selector, length + 1, 1):
+                selector = int(selector) - 1
+                with closing(sqlite3.connect(database_path)) as db_con:
+                    with closing(db_con.cursor()) as cur:
+                        result = cur.execute("SELECT DATE(logTimestamp) as day, sum(hour), sum(minute) FROM WorkLog WHERE subjectID = (?) GROUP BY day", (subjects[selector][0], )).fetchall()
+                if len(result) > 0:
+                    print("\n\tDate\t\t\tLogged Time\t\tDecimal")
+                    for line in result:
+                        hour = line[1]
+                        minute = line[2]
+                        while minute > 60:
+                            hour += 1
+                            minute -= 60
+                        print(f"\t{datetime.strptime(line[0], '%Y-%m-%d').strftime('%d/%m/%Y')}\t\t{hour}h {minute}m\t\t\t{round(hour + minute / 60, 2)}h")
+                else:
+                    print('No time recorded')
+            else:
+                print('No time recorded')
+    else:
+        print("No subjects in database")
+
+
 if __name__ == "__main__":
     if 'idlelib.run' in sys.modules:
         use_live_update_timer = False
@@ -1948,7 +1983,8 @@ if __name__ == "__main__":
                 check_for_backup("Settings", settings_json_path)
                 menu_mode = 'e'
     else:
-        settings = {'display completed %': True, 'display extra completed': False, 'display extra completed %': False, 'tallyEditHour': True, 'tallyEditMinute': True, 'useDB': True}
+        settings = {'display completed %': True, 'display extra completed': False, 'display extra completed %': False, 'tallyEditHour': True, 'tallyEditMinute': True, 'useDB': True, 'useRecentHoursDisplay': True}
+        save_json(settings, settings_json_path, "Settings")
     if settings['useDB']:
         database_path = data_path + 'study_tally.db'
         daily_progress_keys = ['day7Tally', 'day6Tally', 'day5Tally', 'day4Tally', 'day3Tally', 'day2Tally', 'day1Tally']
@@ -1966,6 +2002,12 @@ if __name__ == "__main__":
             menu_mode = 'm'
         elif menu_mode == 'I':
             timer_tally()
+            menu_mode = 'm'
+        elif menu_mode == 'D':
+            if settings['useDB']:
+                display_timesheet()
+            else:
+                print('Need to be in Database mode to use this feature')
             menu_mode = 'm'
         elif menu_mode == 'A':
             if settings['useDB']:
