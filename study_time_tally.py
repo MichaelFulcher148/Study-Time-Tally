@@ -1350,7 +1350,7 @@ def timer_control(subject_name: str, use_live_update_timer: bool):
                     current_time = time.time()
                     sys.stdout.write('\rTime Lapsed = ' + time_convert_str(current_time - start_time))
                     sys.stdout.flush()
-                    time.sleep(0.5)
+                    time.sleep(1)
             else:
                 while timer_running:
                     c = input('Press Enter to stop timer')
