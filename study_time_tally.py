@@ -1,10 +1,11 @@
 import json
 import sys
 import time
-from datetime import timedelta, datetime, date
+from datetime import timedelta, datetime
 from math import ceil
-from os import path
+from os import path, system
 from tools.file import save_json
+from tools.sorting import sort_list_by_date
 import sqlite3
 from contextlib import closing
 from tools import log_tools
@@ -36,7 +37,7 @@ def validate_date(date_text: str) -> bool:
         datetime.strptime(date_text, '%d/%m/%Y').date()
         return True
     except ValueError:
-        print(date_text + " not a valid input")
+        print(date_text + " is not a valid input")
         return False
 
 def get_date() -> str:
@@ -68,15 +69,13 @@ def validate_end_date(start_date: str, old: str = None) -> str:
 
 '''found @: https://stackoverflow.com/questions/9044084/efficient-date-range-overlap-calculation-in-python
     requires passed vars to be datetime objects'''
-def overlap_check(start_of_range1, end_of_range1, start_of_range2, end_of_range2) -> bool:
-    latest_start = max(start_of_range1, start_of_range2)
-    earliest_end = min(end_of_range1, end_of_range2)
+def overlap_check(start_of_range1: datetime, end_of_range1: datetime, start_of_range2: datetime, end_of_range2: datetime) -> bool:
+    latest_start, earliest_end = max(start_of_range1, start_of_range2), min(end_of_range1, end_of_range2)
     delta = (earliest_end - latest_start).days + 1
     return True if delta > 0 else False
 
 def tally_hours(start_date: str, end_date: str, day_dict: dict, cur=None) -> int:
-    date_start = datetime.strptime(start_date, '%d/%m/%Y').date()
-    date_today = datetime.today().date()
+    date_start, date_today = datetime.strptime(start_date, '%d/%m/%Y').date(), datetime.today().date()
     if date_today < date_start:
         return 0
     date_end = datetime.strptime(end_date, '%d/%m/%Y').date()
@@ -91,8 +90,7 @@ def tally_hours(start_date: str, end_date: str, day_dict: dict, cur=None) -> int
     else:
         if 'holidays' in data and len(data['holidays']) > 0:
             for name, date in data['holidays'].items():
-                holiday_start = datetime.strptime(date[0], '%d/%m/%Y').date()
-                holiday_end = datetime.strptime(date[1], '%d/%m/%Y').date()
+                holiday_start, holiday_end = datetime.strptime(date[0], '%d/%m/%Y').date(), datetime.strptime(date[1], '%d/%m/%Y').date()
                 if overlap_check(date_start, date_today, holiday_start, holiday_end):
                     holiday_list.append([holiday_start, holiday_end])
     one_day = timedelta(days=1)
@@ -179,26 +177,22 @@ def display_holiday_list_db(add_numbers: bool, names_list: dict, id_range: dict,
             new_keys.append(id)
     nums = names_list_keys + new_keys
     t_width, add_space, tabs = tabs_list(new_name_list)
-    add_numbers_str = '\t' if add_numbers else ''
-    tab_section = '\t' * t_width
+    add_numbers_str, tab_section = '\t' if add_numbers else '', '\t' * t_width
     print(f"\nSaved Holidays:\n{add_numbers_str}Name{tab_section}{' ' if add_space else ''}Start Date\tEnd Date")
     n = 0
     for id in nums:
-        add_numbers_str = str(n) + '.\t' if add_numbers else ''
-        tab_section = '\t' * tabs[n]
+        add_numbers_str, tab_section = str(n) + '.\t' if add_numbers else '', '\t' * tabs[n]
         print(f"{add_numbers_str}{changed_names[id] if id in changed_names.keys() else names_list[id]}{tab_section}{' ' if add_space else ''}{changed_start[id] if id in changed_start.keys() else id_range[id][0]}\t{changed_end[id] if id in changed_end.keys() else id_range[id][1]}\t{'(Removed)' if id in for_removal else ''}")
         n += 1
     return n
 
 def display_holiday_list(add_numbers: bool = False) -> int:
     t_width, add_space, tabs = tabs_list([*data['holidays'].keys()])
-    add_numbers_str = '\t' if add_numbers else ''
-    tab_section = '\t' * t_width
+    add_numbers_str, tab_section = '\t' if add_numbers else '', '\t' * t_width
     print(f"\nSaved Holidays:\n{add_numbers_str}Name{tab_section}{' ' if add_space else ''}Start Date\tEnd Date")
     n = 0
     for holiday, dates in data['holidays'].items():
-        add_numbers_str = str(n) + '.\t' if add_numbers else ''
-        tab_section = '\t' * tabs[n]
+        add_numbers_str, tab_section = str(n) + '.\t' if add_numbers else '', '\t' * tabs[n]
         print(f"{add_numbers_str}{holiday}{tab_section}{' ' if add_space else ''}{dates[0]}\t{dates[1]}")
         n += 1
     return n
@@ -243,8 +237,7 @@ def get_enabled_subjects(db_loc: str) -> list:
 
 def main_menu() -> chr:
     global last_past_hours_update
-    valid_option = False
-    past_hours_reset = True
+    valid_option, past_hours_reset = False, True
     if settings['useDB']:
         print('\tDatabase Mode')
         subjects = get_enabled_subjects(database_path)
@@ -262,6 +255,7 @@ def main_menu() -> chr:
         else:
             items_present = False
     while not valid_option:
+        system(clear_command)
         if items_present:
             if settings['useRecentHoursDisplay']:
                 if check_fix_daily_progress() or past_hours_reset:
@@ -313,6 +307,10 @@ def main_menu() -> chr:
         valid_option = menu_char_check(menu_option, 'TIXDAREHS')
     return menu_option
 
+"""
+Check if day has changed since last daily progress dictionary was updated.
+If the day has changed then data and keys are re-arranged to the correct weekdays.
+"""
 def check_fix_daily_progress():
     global last_past_hours_update
     n = (datetime.now().date() - last_past_hours_update).days
@@ -370,7 +368,7 @@ def setup_day_options(start_date, end_date, need_length: bool = True):
         else:
             return day_options
 
-def check_digit(num_str: str, allow_enter_be_zero: bool):
+def check_digit(num_str: str, allow_enter_be_zero: bool) -> tuple:
     if num_str == '':
         if allow_enter_be_zero:
             return True, 0
@@ -397,12 +395,12 @@ def get_hour(day_num: int) -> int:
         valid_num, digit = check_digit(selector, False)
     return digit
 
-def create_days_dict(s_day_options: str, length: int, return_day_list: bool = False, days=None):
-    """Creates dictionary of given options str, length, return_day_list: bool, days dict: optional
+"""Creates dictionary of given options str, length, return_day_list: bool, days dict: optional
 
     Returns dict of days
     if return_day_list = True
     Returns dict of days, days_options str"""
+def create_days_dict(s_day_options: str, length: int, return_day_list: bool = False, days=None):
     if days is None:
         days = dict()
     if length == 1:
@@ -457,7 +455,7 @@ def get_name(type_text: str, name_list: list) -> str:
         else:
             print("Name must be at least 1 character.")
 
-def add_menu_common():
+def add_menu_common() -> tuple:
     print('\n\t--ADD SUBJECT--')
     print("\n\tStart Date, format - dd/mm/yyyy.")
     start = get_date()
@@ -515,8 +513,9 @@ def validate_selector(a_string: str, num: int, start_num: int = 0) -> bool:
         if start_num <= a < num:
             return True
         else:
-            print(a_string + " is not a valid option")
+            print(a_string + " is not a valid option.")
             return False
+    return False
 
 def remove_menu() -> bool:
     if settings['useDB']:
@@ -526,8 +525,7 @@ def remove_menu() -> bool:
         state_list = [subj[2] for subj in subjects]
         length = len(subjects)
         if length > 0:
-            k = len(str(length))
-            j = 0
+            k, j = len(str(length)), 0
             for subj in subjects:
                 length = len(subj[1])
                 if j < length:
@@ -569,7 +567,7 @@ def remove_menu() -> bool:
         else:
             print("\nSubject list is empty.")
 
-def check_day_range(start_date_obj, end_date_obj, old_day_range):
+def check_day_range(start_date_obj, end_date_obj, old_day_range) -> tuple:
     new_day_range = setup_day_options(start_date_obj, end_date_obj, False)
     new_day_range_list = [str(day_options.find(x)) for x in new_day_range]
     day_list = list()  # days that may be removed later
@@ -584,7 +582,7 @@ def remove_days_from_dict(subject: int, remove_list: list) -> None:
     for i in remove_list:
         data['subjects'][subject][1].pop(i)
 
-def check_date_new_days_dict(length: int, new_start_date_obj, new_end_date_obj, old_days_dict: dict):
+def check_date_new_days_dict(length: int, new_start_date_obj, new_end_date_obj, old_days_dict: dict) -> dict:
     if length < 7:
         day_range_change, day_list = check_day_range(new_start_date_obj, new_end_date_obj, [*old_days_dict.keys()])
         log_output = str()
@@ -701,13 +699,11 @@ def edit_time_tally(subject_choice: int, time_category: int) -> None:
                 if selector == 'X':
                     break
                 elif selector.isdigit():
-                    n = int(selector)
-                    old = data['subjects'][subject_choice][time_category][0] * 60 + data['subjects'][subject_choice][time_category][1]
+                    n, old = int(selector), data['subjects'][subject_choice][time_category][0] * 60 + data['subjects'][subject_choice][time_category][1]
                     if n > old:
                         print("Amount to subtract cannot be larger then current hours + minutes ({}h {}m)".format(str(data['subjects'][subject_choice][time_category][0]), str(data['subjects'][subject_choice][time_category][1])))
                     else:
-                        old = data['subjects'][subject_choice][time_category][0]
-                        old_minute = data['subjects'][subject_choice][time_category][1]
+                        old, old_minute = data['subjects'][subject_choice][time_category][0], data['subjects'][subject_choice][time_category][1]
                         data['subjects'][subject_choice][time_category][1] -= n
                         while data['subjects'][subject_choice][time_category][1] < 0:
                             data['subjects'][subject_choice][time_category][1] += 60
@@ -842,13 +838,7 @@ def edit_menu_db() -> None:
     length = len(subjects)
     if length > 0:
         unsaved_changes = False
-        changed_names = dict()
-        changed_start_date = dict()
-        changed_end_date = dict()
-        changed_normal_time = dict()
-        changed_display_enable = dict()
-        changed_extra_time = dict()
-        changed_days = dict()
+        changed_names, changed_start_date, changed_end_date, changed_normal_time, changed_display_enable, changed_extra_time, changed_days = dict(), dict(), dict(), dict(), dict(), dict(), dict()
         while 1:
             n = 0
             print(f"\n--EDIT SUBJECT MENU : Unsaved Changes: {unsaved_changes}--\nExit and (S)ave Changes\ne(X)it without saving")
@@ -864,7 +854,7 @@ def edit_menu_db() -> None:
                 break
             elif selector == 'S':
                 if unsaved_changes:
-                    update_entryType_list = list()
+                    update_entry_type_list = list()
                     log_tools.tprint("Saving changes to Database.")
                     with closing(sqlite3.connect(database_path)) as db_con:
                         with closing(db_con.cursor()) as cur:
@@ -876,18 +866,18 @@ def edit_menu_db() -> None:
                             if changed_start_date:
                                 for db_id, var in changed_start_date.items():
                                     db_trans_change_date_range_date(cur, db_id, get_name_frm_subjects_list(db_id, subjects), var, "startDate")
-                                    update_entryType_list.append(db_id)
+                                    update_entry_type_list.append(db_id)
                                 changed_start_date.clear()
                             if changed_end_date:
                                 for db_id, var in changed_end_date.items():
                                     db_trans_change_date_range_date(cur, db_id, get_name_frm_subjects_list(db_id, subjects), var, "endDate")
-                                    if db_id not in update_entryType_list:
-                                        update_entryType_list.append(db_id)
+                                    if db_id not in update_entry_type_list:
+                                        update_entry_type_list.append(db_id)
                                 changed_end_date.clear()
                             if changed_normal_time:
                                 # now_time = datetime.now()
-                                now_time_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                                 one_day_course = True  # repurposed to indicate if now_time has been generated
+                                now_time_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                                 for db_id, var in changed_normal_time.items():
                                     db_trans_remove_frm_time_tally(cur, now_time_str, db_id, get_name_frm_subjects_list(db_id, subjects), [time_data_filter(x) for x in cur.execute(f"SELECT sum(hour), sum(minute) FROM WorkLog WHERE subjectID = (?) AND timeType = 0", (db_id,)).fetchone()], var, 0)
                                 changed_normal_time.clear()
@@ -906,7 +896,7 @@ def edit_menu_db() -> None:
                                 for db_id, var in changed_display_enable.items():
                                     db_trans_change_display_setting(cur, db_id, get_name_frm_subjects_list(db_id, subjects), var)
                                 changed_display_enable.clear()
-                            for db_id in update_entryType_list:
+                            for db_id in update_entry_type_list:
                                 results = cur.execute("SELECT startDate, endDate FROM Subject WHERE ID = (?)", (db_id,)).fetchone()
                                 cur.execute("UPDATE WorkLog SET timeType = IIF(logTimestamp >= (?) AND logTimestamp <= (?), 0, 1) WHERE subjectID = (?)", (results[0] + ' 00:00:00', results[1] + ' 23:59:59', db_id))
                             db_con.commit()
@@ -970,17 +960,17 @@ def edit_menu_db() -> None:
                                         indexes_of_changed_names.remove(subjects[selector_int][0])
                                         subjects = cur.execute("SELECT ID, subjectName FROM Subject").fetchall()
                                     if subjects[selector_int][0] in changed_start_date.keys():
+                                        this_field_unsaved_changes = True  # var repurposed to need to change timeType column
                                         db_trans_change_date_range_date(cur, subjects[selector_int][0], get_name_frm_subjects_list(subjects[selector_int][0], subjects), changed_start_date[subjects[selector_int][0]], "startDate")
                                         changed_start_date.pop(subjects[selector_int][0])
-                                        this_field_unsaved_changes = True  # var repurposed to need to change timeType column
                                     if subjects[selector_int][0] in changed_end_date.keys():
+                                        this_field_unsaved_changes = True
                                         db_trans_change_date_range_date(cur, subjects[selector_int][0], get_name_frm_subjects_list(subjects[selector_int][0], subjects), changed_end_date[subjects[selector_int][0]], "endDate")
                                         changed_end_date.pop(subjects[selector_int][0])
-                                        this_field_unsaved_changes = True
                                     if subjects[selector_int][0] in changed_normal_time.keys():
                                         # now_time = datetime.now()
-                                        now_time_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                                         one_day_course = True  # repurposed to indicate if now_time has been generated
+                                        now_time_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                                         db_trans_remove_frm_time_tally(cur, now_time_str, subjects[selector_int][0], get_name_frm_subjects_list(subjects[selector_int][0], subjects), [time_data_filter(x) for x in cur.execute(f"SELECT sum(hour), sum(minute) FROM WorkLog WHERE subjectID = (?) AND timeType = 0", (subjects[selector_int][0],)).fetchone()], changed_normal_time[subjects[selector_int][0]], 0)
                                         changed_normal_time.pop(subjects[selector_int][0])
                                     if subjects[selector_int][0] in changed_extra_time.keys():
@@ -1014,9 +1004,9 @@ def edit_menu_db() -> None:
                                         old = days_dict[d]
                                         new_amount = int(num)
                                         if old != new_amount:
+                                            unsaved_changes = True
                                             days_dict[d] = new_amount
                                             changed_days[subjects[selector_int][0]] = days_dict
-                                            unsaved_changes = True
                                             log_tools.tprint(f"Changed {subjects[selector_int][1]} {day_name} time from {old} to {new_amount}. (Not Saved:DB Mode)")
                                         break
                                     elif num == "X":
@@ -1040,9 +1030,9 @@ def edit_menu_db() -> None:
                                                 print(f'Duplicate name "{name}" found, pick another name.')
                                                 break
                                         if this_field_unsaved_changes:
+                                            unsaved_changes = True
                                             changed_names[subjects[selector_int][0]] = name
                                             indexes_of_changed_names.append(subjects[selector_int][0])
-                                            unsaved_changes = True
                                             log_tools.tprint(f"Renamed {old} to {changed_names[subjects[selector_int][0]]}. (Not Saved:DB Mode)")
                                     else:
                                         print("Name must be at least 1 character.")
@@ -1050,8 +1040,8 @@ def edit_menu_db() -> None:
                                     while 1:
                                         v_old = get_subjects_date('startDate', subjects[selector_int][0], database_path)
                                         if subjects[selector_int][0] in changed_start_date.keys():
-                                            old = changed_start_date[subjects[selector_int][0]]
                                             this_field_unsaved_changes = True
+                                            old = changed_start_date[subjects[selector_int][0]]
                                             print(f"\nStart Date, format - dd/mm/yyyy. Unsaved date: {datetime.strptime(old, '%Y-%m-%d').date().strftime('%d/%m/%Y')}, Date in DB: {datetime.strptime(v_old, '%Y-%m-%d').date().strftime('%d/%m/%Y')}")
                                         else:
                                             this_field_unsaved_changes = False
@@ -1075,10 +1065,10 @@ def edit_menu_db() -> None:
                                         else:
                                             if days_dict != new_days_dict:
                                                 changed_days[subjects[selector_int][0]] = new_days_dict
+                                        unsaved_changes = True
                                         new_date = new_date_obj.strftime('%Y-%m-%d')
                                         changed_start_date[subjects[selector_int][0]] = new_date
                                         start_date = new_date
-                                        unsaved_changes = True
                                         log_tools.tprint(f"Changed Start Date from {old_date_obj.strftime('%d/%m/%Y')} to {new_date_obj.strftime('%d/%m/%Y')}. (Not Saved:DB Mode)")
                                     else:
                                         print(f'No change made to Start Date: New Date is same as Old Date {new_date}')
@@ -1086,8 +1076,8 @@ def edit_menu_db() -> None:
                                     while 1:
                                         v_old = get_subjects_date('endDate', subjects[selector_int][0], database_path)
                                         if subjects[selector_int][0] in changed_end_date.keys():
-                                            old = changed_end_date[subjects[selector_int][0]]
                                             this_field_unsaved_changes = True
+                                            old = changed_end_date[subjects[selector_int][0]]
                                             print(f"\nEnd Date, format - dd/mm/yyyy. Unsaved date: {datetime.strptime(old, '%Y-%m-%d').date().strftime('%d/%m/%Y')}, Date in DB: {datetime.strptime(v_old, '%Y-%m-%d').date().strftime('%d/%m/%Y')}")
                                         else:
                                             this_field_unsaved_changes = False
@@ -1111,10 +1101,10 @@ def edit_menu_db() -> None:
                                         else:
                                             if days_dict != new_days_dict:
                                                 changed_days[subjects[selector_int][0]] = new_days_dict
+                                        unsaved_changes = True
                                         new_date = new_date_obj.strftime('%Y-%m-%d')
                                         changed_end_date[subjects[selector_int][0]] = new_date
                                         end_date = new_date
-                                        unsaved_changes = True
                                         log_tools.tprint(f"Changed End Date from {old_date_obj.strftime('%d/%m/%Y')} to {new_date_obj.strftime('%d/%m/%Y')}. (Not Saved:DB Mode)")
                                     else:
                                         print(f'No change made to End Date: New Date is same as Old Date {new_date}')
@@ -1255,8 +1245,7 @@ def edit_menu() -> bool:
                                     while 1:
                                         print("\nStart Date, format - dd/mm/yyyy. Current Date ({})".format(data['subjects'][subject_choice][2]))
                                         new_date = get_date()
-                                        new_date_obj = datetime.strptime(new_date, '%d/%m/%Y').date()
-                                        end_date_obj = datetime.strptime(data['subjects'][subject_choice][3], '%d/%m/%Y').date()
+                                        new_date_obj, end_date_obj = datetime.strptime(new_date, '%d/%m/%Y').date(), datetime.strptime(data['subjects'][subject_choice][3], '%d/%m/%Y').date()
                                         if end_date_obj < new_date_obj:
                                             print("Start date must be before the end date ({}).".format(data['subjects'][subject_choice][3]))
                                         else:
@@ -1264,8 +1253,7 @@ def edit_menu() -> bool:
                                     change_date_json(subject_choice, 2, "start", (end_date_obj - new_date_obj).days + 1, new_date_obj, end_date_obj, new_date)
                                 elif field == 3:  # Change end date
                                     new_date = validate_end_date(data['subjects'][subject_choice][2])
-                                    start_date_obj = datetime.strptime(data['subjects'][subject_choice][2], '%d/%m/%Y').date()
-                                    new_date_obj = datetime.strptime(new_date, '%d/%m/%Y').date()
+                                    start_date_obj, new_date_obj = datetime.strptime(data['subjects'][subject_choice][2], '%d/%m/%Y').date(), datetime.strptime(new_date, '%d/%m/%Y').date()
                                     change_date_json(subject_choice, 3, "end", (new_date_obj - start_date_obj).days + 1, start_date_obj, new_date_obj, new_date)
                                 elif field == 4:  # Add days
                                     s_day_options, length = setup_day_options(data['subjects'][subject_choice][2], data['subjects'][subject_choice][3])
@@ -1306,8 +1294,7 @@ def edit_menu() -> bool:
 #     pass
 
 def add_hour_minute(subject: int, time_category: int, hour: int, minute: int) -> None:
-    old_hour = data['subjects'][subject][time_category][0]
-    old_minute = data['subjects'][subject][time_category][1]
+    old_hour, old_minute = data['subjects'][subject][time_category][0], data['subjects'][subject][time_category][1]
     data['subjects'][subject][time_category][0] += hour
     data['subjects'][subject][time_category][1] += minute
     correct_time_format_for_pos_minute(data['subjects'][subject][time_category])
@@ -1350,7 +1337,7 @@ def timer_control(subject_name: str, use_live_update_timer: bool):
                     current_time = time.time()
                     sys.stdout.write('\rTime Lapsed = ' + time_convert_str(current_time - start_time))
                     sys.stdout.flush()
-                    time.sleep(0.5)
+                    time.sleep(1)
             else:
                 while timer_running:
                     c = input('Press Enter to stop timer')
@@ -1366,8 +1353,9 @@ def timer_control(subject_name: str, use_live_update_timer: bool):
             print('Timer stopped at {}\n'.format('{0} minute{s}'.format(current_time, s='' if current_time == 1 else 's') if hours == 0 else '{0} hour{s} {m}'.format(hours, s=' ' if hours == 1 else 's ', m='{0} minute{s}'.format(current_time, s='' if current_time == 1 else 's'))))
             return hours, current_time
 
-def db_trans_commit_WorkLog(new_tally: list, subject_id: int, entry_type: int) -> None:
-    now_time = datetime.now()
+def db_trans_commit_workLog(new_tally: list, subject_id: int, entry_type: int, now_time=None) -> None:
+    if now_time is None:
+        now_time = datetime.now()
     correct_time_format_for_pos_minute(new_tally)
     with closing(sqlite3.connect(database_path)) as db_con:
         with closing(db_con.cursor()) as cur:
@@ -1395,13 +1383,52 @@ def timer_tally() -> bool:
                     new_tally = list(timer_control(subjects[selector][1], use_live_update_timer))
                     timer_running = True
                     if new_tally[1] != 0 or new_tally[0] != 0:
-                        db_trans_commit_WorkLog(new_tally, subjects[selector][0], 2)
-                        log_tools.tprint(f"DB Add: WorkLog - Timer Tally - subjectID: {subjects[selector][0]} - subjectName:{subjects[selector][1]} - {new_tally[0]}h {new_tally[1]}m")
-                        if settings['useRecentHoursDisplay']:
-                            check_fix_daily_progress()
-                            past_hours['day1Tally'][0] += new_tally[0]
-                            past_hours['day1Tally'][1] += new_tally[1]
-                            correct_time_format_for_pos_minute(past_hours['day1Tally'])
+                        now_time = datetime.now()
+                        if now_time.hour * 60 + now_time.minute < new_tally[0] * 60 + new_tally[1]:
+                            if now_time.minute != 0 and now_time.hour != 0:  ## was or 26/02/2025
+                                db_trans_commit_workLog([now_time.hour, now_time.minute], subjects[selector][0], 2, now_time)
+                                log_tools.tprint(f"DB Add: WorkLog - Timer Tally - subjectID: {subjects[selector][0]} - subjectName:{subjects[selector][1]} - {now_time.hour}h {now_time.minute}m")
+                                if settings['useRecentHoursDisplay']:
+                                    check_fix_daily_progress()
+                                    past_hours['day1Tally'][0] += now_time.hour
+                                    past_hours['day1Tally'][1] += now_time.minute
+                                    correct_time_format_for_pos_minute(past_hours['day1Tally'])
+                                new_tally = [0, (new_tally[0] * 60 + new_tally[1]) - (now_time.hour * 60 + now_time.minute)]
+                                correct_time_format_for_pos_minute(new_tally)
+                            else:
+                                if settings['useRecentHoursDisplay']:
+                                    check_fix_daily_progress()
+                            current_week_day = 1
+                            tally_adjust = [24, 0]
+                            now_time = datetime.strptime(f"{now_time.strftime('%Y-%m-%d')} 23:59:59", '%Y-%m-%d %H:%M:%S')  # now_time is repurposed to timestamp for next log entry
+                            while new_tally[1] != 0 or new_tally[0] != 0:
+                                now_time -= timedelta(days=1)
+                                if new_tally[0] > 23:
+                                    db_trans_commit_workLog(tally_adjust, subjects[selector][0], 2, now_time)
+                                    log_tools.tprint(f"DB Add: WorkLog - Timer Tally - subjectID: {subjects[selector][0]} - subjectName:{subjects[selector][1]} - 24h 0m - DB Timestamp: {now_time.strftime('%Y-%m-%d %H:%M:%S')}")
+                                else:
+                                    db_trans_commit_workLog(new_tally, subjects[selector][0], 2, now_time)
+                                    log_tools.tprint(f"DB Add: WorkLog - Timer Tally - subjectID: {subjects[selector][0]} - subjectName:{subjects[selector][1]} - {new_tally[0]}h {new_tally[1]}m - DB Timestamp: {now_time.strftime('%Y-%m-%d %H:%M:%S')}")
+                                    tally_adjust[0], tally_adjust[1] = new_tally[0], new_tally[1]
+                                if settings['useRecentHoursDisplay'] and current_week_day != 7:
+                                    current_week_day += 1
+                                    past_hours_str = f'day{current_week_day}Tally'
+                                    try:
+                                        past_hours[past_hours_str][0] += tally_adjust[0]
+                                        past_hours[past_hours_str][1] += tally_adjust[1]
+                                    except KeyError:
+                                        past_hours[past_hours_str] = [tally_adjust[0], tally_adjust[1]]
+                                    correct_time_format_for_pos_minute(past_hours[past_hours_str])
+                                new_tally[0] -= tally_adjust[0]
+                                new_tally[1] -= tally_adjust[1]
+                        else:
+                            db_trans_commit_workLog(new_tally, subjects[selector][0], 2, now_time)
+                            log_tools.tprint(f"DB Add: WorkLog - Timer Tally - subjectID: {subjects[selector][0]} - subjectName:{subjects[selector][1]} - {new_tally[0]}h {new_tally[1]}m")
+                            if settings['useRecentHoursDisplay']:
+                                check_fix_daily_progress()
+                                past_hours['day1Tally'][0] += new_tally[0]
+                                past_hours['day1Tally'][1] += new_tally[1]
+                                correct_time_format_for_pos_minute(past_hours['day1Tally'])
         else:
             print("No subjects found in Database")
     else:
@@ -1428,9 +1455,87 @@ def timer_tally() -> bool:
 def get_tally_digits():
     return get_time_digit('hour') if settings['tallyEditHour'] else 0, get_time_digit('minute') if settings['tallyEditMinute'] else 0
 
+def validate_time(date_text: str) -> bool:
+    a_list = date_text.split(':')
+    if len(a_list) != 2 or not a_list[0].isnumeric() or not a_list[1].isnumeric() or (a_list[0] == '24' and a_list[1] not in ['0', '00']):
+        return False
+    if 0 > int(a_list[0]) > 23 or 0 > int(a_list[1]) > 59:
+        return False
+    return True
+
+def get_time(date_text):
+    while 1:
+        time = input("Enter Time (HH:MM):")
+        if validate_time(time):
+            return time
+
+def collision_position(check_time, times_list):
+    n = 0
+    for line in times_list:
+        if line[0] >= check_time <= line[1]:
+            print(f'Collision with entry starting {line[0].strftime("%d/%m/%Y %H:%M")} and ending {line[1].strftime("%d/%m/%Y %H:%M")}\nPick a time outside of this range.')
+            return n
+        n += 1
+    return None
+
+def add_to_tally_for_batch_mode(current_day, times_list, current_entry_list=None) -> tuple:
+    if current_entry_list is None:
+        current_entry_list = []
+    collision = True
+    print(f'current day: {current_day.strftime("%d-%m-%Y")}')
+    selector = input('New Date? Enter to keep last date:')
+    if selector != "":
+        new_day = get_date()
+    while collision:
+        time = get_time()
+        new_time = datetime.strptime(new_day + " " + time, '%d/%m/%Y %H:%M')
+        if collision_position(new_time, times_list):  # check for collision in db
+            continue
+        if collision_position(new_time, current_entry_list):
+            continue
+    collision = True
+    while collision:
+        new_tally = list(get_tally_digits())
+        new_tally_time = new_day + timedelta(hours=new_tally[0], minutes=new_tally[1])
+        n = collision_position(new_tally_time, times_list)
+        if n:
+            minute = (current_entry_list[n] - new_tally_time).seconds // 60
+            print(f'Collision in the Database. Tally for this session must be less than {minute // 60} hours, {minute % 60} minutes')
+            continue
+        n = collision_position(new_tally_time, current_entry_list)
+        if n:
+            minute = (current_entry_list[n] - new_tally_time).seconds // 60
+            print(f'Collision in the new entries. Tally for this session must be less than {minute // 60} hours, {minute % 60} minutes')
+            continue
+        collision = False
+    return new_day, new_tally
+
+def edit_menu_for_batch_mode(index, time_list, current_entry_list) -> None:
+    selector = input('\n\t1. Date\n\t2. Timestamp\n\t3. Hour\n\t4. Minute\nOption:')
+    if validate_selector(selector, 4, 1):
+        if selector == 1:
+            old_time_str = current_entry_list[index][0].strftime('%H:%M')
+            current_entry_list[index][0] = datetime.strptime(get_date() + " " + old_time_str, '%d/%m/%Y %H:%M')
+        elif selector == 2:
+            old_time_str = current_entry_list[index][0].strftime('%d/%m/%Y')
+            current_entry_list[index][0] = datetime.strptime(old_time_str + " " + get_time(old_time_str), '%d/%m/%Y %H:%M')
+        elif selector == 3:  # need to check for collisions
+            selector = "n"
+            while not validate_selector(selector, 23, 0):
+                selector = input(f'Current Hour: {current_entry_list[0][0]}\nNew Hour:')
+            current_entry_list[0][0] = int(selector)
+        else:
+            selector = "n"
+            while not validate_selector(selector, 59, 0):
+                selector = input(f'Current Minute: {current_entry_list[0][1]}\nNew Minute:')
+            current_entry_list[0][1] = int(selector)
+    else:
+        print("Invalid input.")
+
 def add_to_tally() -> bool:
     global last_past_hours_update
     if settings['useDB']:
+        is_batch_mode_on = False
         subjects = get_enabled_subjects(database_path)
         length = len(subjects)
         if length > 0:
@@ -1440,27 +1545,129 @@ def add_to_tally() -> bool:
                 for subj in subjects:
                     n += 1
                     print(f"\t{n} - {subj[1]}")
+                print(f'(B)atch and specify date/time mode: {"ON" if is_batch_mode_on else "OFF"}')
                 selector = input("Subject to add tally to:").upper()
                 if selector == 'X':
                     break
+                elif selector == 'B':
+                    is_batch_mode_on = not is_batch_mode_on
                 elif validate_selector(selector, length + 1, 1):
                     selector = int(selector) - 1
                     print("Adding to Tally of " + subjects[selector][1])
-                    new_tally = list(get_tally_digits())
-                    if new_tally[1] != 0 or new_tally[0] != 0:
-                        # get time from beginning of day
-                        # if new tally + day1Tally > minutes of this day split time log
-                        # add to yesterday's time, correct yesterday
-                        db_trans_commit_WorkLog(new_tally, subjects[selector][0], 1)
-                        log_tools.tprint(f"DB Add: WorkLog Manual Tally - subjectID: {subjects[selector][0]} - subjectName:{subjects[selector][1]} - {new_tally[0]}h {new_tally[1]}m")
-                        if settings['useRecentHoursDisplay']:
-                            check_fix_daily_progress()
-                            past_hours['day1Tally'][0] += new_tally[0]
-                            past_hours['day1Tally'][1] += new_tally[1]
-                            correct_time_format_for_pos_minute(past_hours['day1Tally'])
-                        break
+                    if is_batch_mode_on:
+                        subject_id = subjects[selector][1]
+                        entry_list, time_list = [], []  # entry_list, Format: [0] - datetime, [1][0] hour, [1][1] minute
+                        with open(sqlite3.connect(database_path)) as db_con:
+                            with closing(db_con.cursor()) as cur:
+                                result = cur.execute("SELECT logTimestamp, hour, minute FROM WorkLog WHERE subjectID = (?) ORDER BY logTimestamp ASC", (subject_id,))
+                        length = len(result)
+                        if length > 0:
+                            n = 0
+                            for line in result:
+                                time_list.append([datetime.strptime(line[0], "%Y-%m-%d %H:%M:%S")])
+                                time_list[n].append(time_list[n][0] + timedelta(hours=line[1], minutes=line[2]))
+                                n += 1
+                            if length > 1:
+                                n, n2, = 0, 1
+                                while n < length:
+                                    if time_list[n][1] <= time_list[n2][0]:
+                                        time_list[n][1] += time_list[n2][1] - time_list[n2][0]
+                                        time_list.pop(n2)
+                                        length -= 1
+                                        if length == n2:
+                                            break
+                                        continue
+                                    n += 1
+                                    n2 += 1
+                        while selector != 'X':
+                            current_day = datetime.now()
+                            if len(entry_list) > 0:
+                                n = 1
+                                for item in entry_list:
+                                    print(f'{n}. {item[0]} - {item[1][0]}h {item[1][0]}m')
+                                    n += 1
+                                selector = input('\n\t(A)dd time\n\t(E)dit\n\t(D)elete\n\t(S)ave all\n\te(X)it\n\tOption:').upper()
+                                if selector == 'S':
+                                    print('not implemented')
+                                    # if settings['useRecentHoursDisplay']:
+                                    #     check_fix_daily_progress()
+                                    #     past_hours['day1Tally'][0] += new_tally[0]
+                                    #     past_hours['day1Tally'][1] += new_tally[1]
+                                    #     correct_time_format_for_pos_minute(past_hours['day1Tally'])
+                                    # if item[-1][1]  # if last entry is current day
+                                    # for item[-1] in entry_list: check each
+
+                                    # for item in entry_list:
+                                    #     db_trans_commit_workLog(new_tally, subjects[selector][0], 1)
+                                    #     log_tools.tprint(f"DB Add: WorkLog Manual Tally - subjectID: {subjects[selector][0]} - subjectName:{subjects[selector][1]} - {new_tally[0]}h {new_tally[1]}m")
+
+                                  # primary key collisions ? - need to find correct timestamp to avoid
+                                elif selector == 'A':
+                                    current_day, new_entry = add_to_tally_for_batch_mode(current_day, time_list, entry_list)
+                                    entry_list.append([current_day, current_day + timedelta(hours=new_entry[0], minutes=new_entry[1]), new_entry])
+                                    sort_list_by_date(entry_list, [x[0] for x in entry_list])  # sort data by date
+                                elif selector == 'E':
+                                    if len(entry_list) > 1:
+                                        while selector != 'X':
+                                            n = 1
+                                            for item in entry_list:
+                                                print(f'{n}. {item[0]} - {item[1][0]}h {item[1][1]}m')
+                                                n += 1
+                                            selector = input('\n\te(X)it\n\tWhich entry do you want to edit?').upper()
+                                            if validate_selector(selector, n - 1, 1):
+                                                n -= 1
+                                                edit_menu_for_batch_mode(n, time_list, entry_list)
+                                    else:
+                                        edit_menu_for_batch_mode(0, time_list, entry_list)
+                                    sort_list_by_date(entry_list, [x[0] for x in entry_list])  # sort data by date
+                                elif selector == 'D':
+                                    if len(entry_list) > 1:
+                                        while selector != 'X':
+                                            n = 1
+                                            for item in entry_list:
+                                                print(f'{n}. {item[0]} - {item[1][0]}h {item[1][1]}m')
+                                                n += 1
+                                            selector = input('\n\te(X)it\n\tWhich entry do you want to delete?').upper()
+                                            if validate_selector(selector, n - 1, 1):
+                                                n -= 1
+                                                entry_list.pop(n)
+                                    else:
+                                        while selector not in "YN":
+                                            selector = input(f"\n\t(Y)es will delete\t{entry_list[0][0]} - {entry_list[0][1][0]}h {entry_list[0][1][1]}m\n\tDo you wish to continue?:").upper()
+                                        if selector == 'Y':
+                                            selector = 'X'
+                                elif selector == 'X':
+                                    while selector not in "YN":
+                                        selector = input("\n\tExiting will ease all progress, do you wish to continue?:").upper()
+                                    if selector == 'Y':
+                                        selector = 'X'
+                            else:
+                                current_day, new_entry = add_to_tally_for_batch_mode(current_day, time_list)
+                                entry_list.append([current_day, current_day + timedelta(hours=new_entry[0], minutes=new_entry[1]), new_entry])
+                            # while selector not in ['YMDT']:
+                            #     selector = input('Option:')
+                            #     if selector == 'Y':
+                            #         selector = input('Input year:')
+                            #     elif selector == 'M':
+                            #         selector = input('Input month:')
+                            #     elif selector == 'D':
+                            #         selector = input('Input day:')
+                            #     elif selector == 'T':
+                            #         selector = input('Input year:')
+                            # print('time')
                     else:
-                        print("No time recorded because no data entered")
+                        new_tally = list(get_tally_digits())
+                        if new_tally[1] != 0 or new_tally[0] != 0:
+                            db_trans_commit_workLog(new_tally, subjects[selector][0], 1)
+                            log_tools.tprint(f"DB Add: WorkLog Manual Tally - subjectID: {subjects[selector][0]} - subjectName:{subjects[selector][1]} - {new_tally[0]}h {new_tally[1]}m")
+                            if settings['useRecentHoursDisplay']:
+                                check_fix_daily_progress()
+                                past_hours['day1Tally'][0] += new_tally[0]
+                                past_hours['day1Tally'][1] += new_tally[1]
+                                correct_time_format_for_pos_minute(past_hours['day1Tally'])
+                            break
+                        else:
+                            print("No time recorded because no data entered")
         else:
             print("No subjects found in Database")
     else:
@@ -1483,19 +1690,15 @@ def add_to_tally() -> bool:
 
 def holiday_menu_db() -> None:
     unsaved_change = False
-    changed_names = dict()
-    changed_start_date = dict()
-    changed_end_date = dict()
     removed = list()
+    changed_names, changed_start_date, changed_end_date = dict(), dict(), dict()
     with closing(sqlite3.connect(database_path)) as db_con:
         with closing(db_con.cursor()) as cur:
             holidays_list = cur.execute("SELECT ID, holidayName, startDate, endDate FROM Holiday").fetchall()
             last_id = cur.execute('SELECT MAX(ID) FROM Holiday').fetchone()[0]
     if holidays_list:
-        id_to_range = dict()
-        num_to_id = dict()
-        id_to_name = dict()
         n = 0
+        id_to_range, num_to_id, id_to_name = dict(), dict(), dict()
         for item in holidays_list:
             id_to_range[item[0]] = [datetime.strptime(item[2], '%Y-%m-%d').date().strftime('%d/%m/%Y'), datetime.strptime(item[3], '%Y-%m-%d').date().strftime('%d/%m/%Y')]
             num_to_id[n] = item[0]
@@ -1507,13 +1710,13 @@ def holiday_menu_db() -> None:
             for key, val in id_to_name.items():
                 if key not in changed_names.keys():
                     holiday_names.append(val)
-            display_holiday_list_db(False, id_to_name, id_to_range, removed, changed_names, changed_start_date, changed_end_date)
             num_options = True
+            display_holiday_list_db(False, id_to_name, id_to_range, removed, changed_names, changed_start_date, changed_end_date)
             print("\n\t--HOLIDAY MENU--\n\tExit and (S)ave Changes\n\te(X)it without saving\n\t1. Add Holiday\n\t2. Remove Holiday\n\t3. Edit Holiday")
         else:
             print('\nNo holidays saved.')
-            holiday_names = list()
             num_options = False
+            holiday_names = list()
             print('\n\t--HOLIDAY MENU--\n\tExit and (S)ave Changes\n\te(X)it without saving\n\t1. Add Holiday\n')
         selector = input(("Option:" if num_options else "Field to edit:")).upper()
         if menu_char_check(selector, 'SX' + ('1' if num_options is False else '123')):
@@ -1538,9 +1741,9 @@ def holiday_menu_db() -> None:
                     if field == "X":
                         break
                     elif validate_selector(field, n):
+                        unsaved_change = True
                         num = int(field)
                         removed.append(num_to_id[num])
-                        unsaved_change = True
                         log_tools.tprint(f"Removed {changed_names[num_to_id[num]] if num_to_id[num] in changed_names.keys() else id_to_name[num_to_id[num]]} from Saved Holidays. (Not Saved)")
                         break
             elif selector == '3':
@@ -1894,9 +2097,8 @@ def load_data_json(json_path):
 
 def get_past_hours(now_time):
     blank_time = " 00:00:00"
+    output_dict, records_dict = dict(), dict()
     one_day = timedelta(days=1)
-    output_dict = dict()
-    records_dict = dict()
     # temp_list = daily_progress_keys[0:-1]
     with closing(sqlite3.connect(database_path)) as db_connection:
         with closing(db_connection.cursor()) as cur:
@@ -1934,8 +2136,7 @@ def display_timesheet():
                 if len(result) > 0:
                     print("\n\tDate\t\t\tLogged Time\t\tDecimal")
                     for line in result:
-                        hour = line[1]
-                        minute = line[2]
+                        hour, minute = line[1], line[2]
                         while minute > 60:
                             hour += 1
                             minute -= 60
@@ -1943,7 +2144,7 @@ def display_timesheet():
                 else:
                     print('No time recorded')
             else:
-                print('No time recorded')
+                print("Invalid input.")
     else:
         print("No subjects in database")
 
@@ -1955,15 +2156,16 @@ if __name__ == "__main__":
         import threading
         from msvcrt import getwch
         use_live_update_timer = True
+    from os import name as os_name
+    clear_command = 'cls' if os_name == "nt" else "clear"
+    del os_name
     log_tools.script_id = "StudyTimeTally"
     log_tools.run_date = time.strftime('%d-%m-%Y', time.localtime())
     log_tools.initialize(False)
     timer_running = True
-    day_options = 'MTWHFSU'
-    data_path = ".\\data\\"
     settings_json_path = r'.\data\study_tally_settings.json'
-    weekdays = ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
-    menu_weekdays = ("(M)onday", "(T)uesday", "(W)ednesday", "T(H)ursday", "(F)riday", "(S)aturday", "S(U)nday")
+    day_options, data_path = 'MTWHFSU', ".\\data\\"
+    weekdays, menu_weekdays = ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"), ("(M)onday", "(T)uesday", "(W)ednesday", "T(H)ursday", "(F)riday", "(S)aturday", "S(U)nday")
 
     print("Study Time Tally\n\tBy Michael Fulcher\nSend Donations to - PayPal: mjfulcher58@gmail.com or Bitcoin: 3DXiJxie6En3wcyxjmKZeY2zFLEmK8y42U -- Suggested Donation: $1.50USD\nOther donation options @ http://michaelfulcher.yolasite.com/\n\n")
     if not path.isdir(r'.\data'):
