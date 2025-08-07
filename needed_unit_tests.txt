@@ -1,0 +1,31 @@
+Save a holiday
+
+edit holiday
+name
+start date
+end date
+delete holiday
+
+add subject
+
+edit subject
+name
+start date
+end date
+
+add time
+manual enter
+batch mode
+add
+edit
+delete
+output for errors
+    collision with entries list
+    collision with data from db
+
+display timesheet
+
+display settings menu
+change settings
+
+for unit test example: C:\Users\warha\OneDrive\Documents\UoA\2020\COMPSCI_235\Assignment_3\CS235Flix_web_app_sqldb

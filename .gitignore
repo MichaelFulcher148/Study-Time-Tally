@@ -16,4 +16,9 @@ logs/
 data/
 
 # python
+__pycache__
 tools/__pycache__
+test/__pycache__
+
+./needed_unit_tests.txt
+./.gitignore
